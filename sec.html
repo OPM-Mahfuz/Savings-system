@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>SACCO System with Features</title>
+<!-- Include Chart.js CDN for charts -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  /* Basic styles for layout */
+  body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+  #loginOverlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; }
+  #loginBox { background:#fff; padding:20px; border-radius:5px; }
+  #app { display:none; padding:20px; }
+  .hidden { display:none; }
+  .nav { margin-bottom: 10px; }
+  button { margin: 5px; }
+  table { width: 100%; border-collapse: collapse; margin-top:10px; }
+  th, td { border: 1px solid #ccc; padding:5px; text-align:left; }
+</style>
+</head>
+<body>
+
+<!-- Login Overlay -->
+<div id="loginOverlay">
+  <div id="loginBox">
+    <h3>Login</h3>
+    <input id="username" placeholder="Username" />
+    <input id="password" placeholder="Password" type="password" />
+    <button onclick="login()">Login</button>
+  </div>
+</div>
+
+<!-- Main App -->
+<div id="app">
+  <div class="nav">
+    <button onclick="showSection('dashboard')">Dashboard</button>
+    <button onclick="showSection('members')">Members</button>
+    <button onclick="showSection('savings')">Savings</button>
+    <button onclick="showSection('loans')">Loans</button>
+    <button onclick="showSection('reports')">Reports</button>
+    <button onclick="showSection('memberPortal')" class="member-only">My Account</button>
+    <button onclick="logout()">Logout</button>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="section-dashboard" class="section">
+    <h2>Dashboard</h2>
+    <canvas id="trendChart" style="max-width:100%; height:200px;"></canvas>
+    <div id="alerts"></div>
+  </div>
+
+  <!-- Members Management (Admin/Treasurer) -->
+  <div id="section-members" class="section hidden admin-only">
+    <h2>Members</h2>
+    <button onclick="exportToCSV('membersTable', 'Members.csv')">Export Members</button>
+    <table id="membersTable">
+      <thead><tr><th>ID</th><th>Name</th><th>StaffID</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <!-- Savings Management (Admin/Treasurer) -->
+  <div id="section-savings" class="section hidden admin-only">
+    <h2>Savings</h2>
+    <button onclick="exportToCSV('savingTable', 'Savings.csv')">Export Savings</button>
+    <table id="savingTable">
+      <thead><tr><th>StaffID</th><th>Date</th><th>Amount</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <!-- Loans Management (Admin/Treasurer) -->
+  <div id="section-loans" class="section hidden admin-only">
+    <h2>Loans</h2>
+    <button onclick="exportToCSV('loanTable', 'Loans.csv')">Export Loans</button>
+    <table id="loanTable">
+      <thead><tr><th>StaffID</th><th>Date</th><th>Amount</th><th>Status</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <!-- Reports -->
+  <div id="section-reports" class="section hidden admin-only">
+    <h2>Reports</h2>
+    <label>Start Date:</label><input type="date" id="startDate" onchange="updateReports()" />
+    <label>End Date:</label><input type="date" id="endDate" onchange="updateReports()" />
+    <h3>Savings Report</h3>
+    <table id="reportSavingsTable">
+      <thead><tr><th>StaffID</th><th>Date</th><th>Amount</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <h3>Loans Report</h3>
+    <table id="reportLoansTable">
+      <thead><tr><th>StaffID</th><th>Date</th><th>Amount</th><th>Status</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <!-- Member Self-Service -->
+  <div id="section-memberPortal" class="section hidden member-only">
+    <h2>My Account</h2>
+    <div id="memberData"></div>
+    <button onclick="generateMemberStatement(currentUserStaffID)">Download My Statement</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+/* Data Storage */
+const users = [
+  { u: 'admin', p: 'admin123', role: 'admin' },
+  { u: 'treasurer', p: '123', role: 'treasurer' },
+  { u: 'member1', p: 'memberpass', role: 'member', staffID: 'STAFF001' },
+  { u: 'member2', p: 'memberpass', role: 'member', staffID: 'STAFF002' }
+];
+
+let currentUser = null;
+let currentRole = null;
+let currentUserStaffID = null;
+
+const members = [
+  { id: '1', name: 'Admin User', staffID: 'ADMIN' },
+  { id: '2', name: 'Member One', staffID: 'STAFF001' },
+  { id: '3', name: 'Member Two', staffID: 'STAFF002' }
+];
+
+const savings = [
+  { staffID: 'STAFF001', date: '2023-09-01', amount: 100 },
+  { staffID: 'STAFF001', date: '2023-09-15', amount: 50 },
+  { staffID: 'STAFF002', date: '2023-09-10', amount: 200 }
+];
+
+const loans = [
+  { staffID: 'STAFF001', date: '2023-09-05', amount: 500, status: 'Disbursed' },
+  { staffID: 'STAFF002', date: '2023-09-12', amount: 300, status: 'Pending' }
+];
+
+/* Utility functions */
+function showSection(section) {
+  document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
+  document.getElementById('section-' + section).classList.remove('hidden');
+}
+
+/* Login */
+function login() {
+  const u = document.getElementById('username').value.trim();
+  const p = document.getElementById('password').value.trim();
+  const user = users.find(x => x.u===u && x.p===p);
+  if (user) {
+    currentUser = user.u;
+    currentRole = user.role;
+    if (currentRole==='member') currentUserStaffID=user.staffID;
+  } else {
+    alert('Invalid credentials');
+    return;
+  }
+  document.getElementById('loginOverlay').style.display='none';
+  document.getElementById('app').style.display='block';
+
+  // Show/hide UI based on role
+  if (currentRole==='member') {
+    document.querySelectorAll('.admin-only').forEach(e=>e.style.display='none');
+    document.querySelectorAll('.member-only').forEach(e=>e.style.display='block');
+    showSection('memberPortal');
+    showMemberData(currentUserStaffID);
+  } else {
+    document.querySelectorAll('.admin-only').forEach(e=>e.style.display='block');
+    document.querySelectorAll('.member-only').forEach(e=>e.style.display='none');
+    showSection('dashboard');
+    updateDashboard();
+    generateMemberStatement(currentUserStaffID);
+  }
+}
+
+/* Logout */
+function logout() {
+  currentUser=null;
+  currentRole=null;
+  document.getElementById('loginOverlay').style.display='flex';
+  document.getElementById('app').style.display='none';
+}
+
+/* Show Member Data (Self-Service) */
+function showMemberData(staffID) {
+  const member = members.find(m=>m.staffID===staffID);
+  if (!member) return;
+  const el = document.getElementById('memberData');
+  el.innerHTML= `
+    <p>Name: ${member.name}</p>
+    <p>Staff ID: ${member.staffID}</p>
+    <h3>Savings</h3>
+    <ul>${savings.filter(s=>s.staffID===staffID).map(s=>`<li>${s.date}: $${s.amount}</li>`).join('')}</ul>
+    <h3>Loans</h3>
+    <ul>${loans.filter(l=>l.staffID===staffID).map(l=>`<li>${l.date}: $${l.amount} (${l.status})</li>`).join('')}</ul>
+  `;
+}
+
+/* Generate Member Statement (simulate download) */
+function generateMemberStatement(staffID) {
+  alert('Generating statement for ' + staffID);
+  // For demo, create a CSV string
+  const memberSavings = savings.filter(s=>s.staffID===staffID);
+  const memberLoans = loans.filter(l=>l.staffID===staffID);
+  let csv='Type,Date,Amount,Status\n';
+  memberSavings.forEach(s=>{ csv+=`Saving,${s.date},${s.amount},\n`; });
+  memberLoans.forEach(l=>{ csv+=`Loan,${l.date},${l.amount},${l.status}\n`; });
+  const blob=new Blob([csv], {type:'text/csv'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download='statement_'+staffID+'.csv'; a.click();
+}
+
+/* Update Dashboard with Charts & Alerts */
+function updateDashboard() {
+  renderTrendChart();
+  checkLoanAndSavingsDue();
+}
+
+/* Render trend chart for savings over time */
+function renderTrendChart() {
+  const ctx=document.getElementById('trendChart').getContext('2d');
+  const monthlySavings={};
+  savings.forEach(s=>{
+    const month=s.date.slice(0,7);
+    monthlySavings[month]=(monthlySavings[month]||0)+s.amount;
+  });
+  const labels=Object.keys(monthlySavings).sort();
+  const data=labels.map(l=>monthlySavings[l]);
+  if(window.trendChart) window.trendChart.destroy();
+  window.trendChart=new Chart(ctx,{
+    type:'line',
+    data:{
+      labels,
+      datasets:[{
+        label:'Monthly Savings',
+        data,
+        fill:false,
+        borderColor:'#4e79a7'
+      }]
+    },
+    options:{ responsive:true, plugins:{ legend:{display:true} }, scales:{ y:{ beginAtZero:true } } }
+  });
+}
+
+/* Check for overdue loans or pending savings for notifications */
+function checkLoanAndSavingsDue() {
+  let alerts='';
+  const today=new Date().toISOString().slice(0,10);
+  // Pending loans
+  const pendingLoans=loans.filter(l=>l.status==='Pending');
+  if (pendingLoans.length>0) {
+    alerts+=`<p>Pending Loans: ${pendingLoans.length}</p>`;
+  }
+  // Savings due (simulate)
+  const overdueSavings=savings.filter(s=>s.date<=today);
+  if (overdueSavings.length>0) {
+    alerts+=`<p>Overdue Savings: ${overdueSavings.length}</p>`;
+  }
+  document.getElementById('alerts').innerHTML=alerts || '<p>No alerts</p>';
+}
+
+/* Export to CSV */
+function exportToCSV(tableId, filename='export.csv') {
+  const table=document.getElementById(tableId);
+  const rows=Array.from(table.querySelectorAll('tr'));
+  const csv=rows.map(r=> {
+    const cols=Array.from(r.querySelectorAll('th,td'));
+    return cols.map(c=>'"'+c.innerText.replace(/"/g,'""')+'"').join(',');
+  }).join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=filename; a.click();
+}
+
+/* Show sections */
+function showSection(section) { showSection(section); }
+
+/* Update reports based on date filters */
+function updateReports() {
+  const start=document.getElementById('startDate').value;
+  const end=document.getElementById('endDate').value;
+  // Filter savings
+  const filteredSavings=savings.filter(s=>{
+    return (!start || s.date>=start) && (!end || s.date<=end);
+  });
+  // populate savings report
+  const tbodySavings=document.getElementById('reportSavingsTable').querySelector('tbody');
+  tbodySavings.innerHTML=filteredSavings.map(s=>{
+    const m=members.find(m=>m.staffID===s.staffID);
+    return `<tr><td>${s.staffID}</td><td>${s.date}</td><td>${s.amount}</td></tr>`;
+  }).join('');
+  // Filter loans
+  const filteredLoans=loans.filter(l=>{
+    return (!start || l.date>=start) && (!end || l.date<=end);
+  });
+  // populate loans report
+  const tbodyLoans=document.getElementById('reportLoansTable').querySelector('tbody');
+  tbodyLoans.innerHTML=filteredLoans.map(l=>{
+    const m=members.find(m=>m.staffID===l.staffID);
+    return `<tr><td>${l.staffID}</td><td>${l.date}</td><td>${l.amount}</td><td>${l.status}</td></tr>`;
+  }).join('');
+}
+
+/* Initialize the system on page load */
+window.onload=()=> {
+  // Login is default
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,2409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OPM ARUA SACCO PRO SYSTEM</title>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --primary: #003366;
+      --primary-2: #0055aa;
+      --accent: #0077cc;
+      --bg: #f4f6f9;
+      --surface: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #dbe2ea;
+      --success: #198754;
+      --warning: #f59e0b;
+      --danger: #dc3545;
+      --shadow: 0 10px 25px rgba(0,0,0,0.08);
+      --radius: 14px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: Poppins, sans-serif; }
+    body { background: var(--bg); color: var(--text); line-height: 1.45; font-size: 15px; }
+    h2, h3 { color: var(--primary); }
+
+    /* Focus outline for accessibility */
+    button:focus, input:focus, select:focus {
+      outline: 3px solid #2563eb;
+      outline-offset: 2px;
+    }
+
+    /* Header styles */
+    header {
+      background: var(--primary);
+      color: white;
+      padding: 14px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      position: sticky;
+      top: 0;
+      z-index: 999;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+    }
+
+    header h2 { font-size: 1.1rem; margin-bottom: 8px; flex: 1; }
+
+    /* Menu toggle for mobile */
+    #menuToggle {
+      display: none;
+      background: transparent;
+      border: none;
+      color: white;
+      font-size: 1.8rem;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+
+    /* Container and layout */
+    .container {
+      display: flex;
+      flex-direction: row;
+      min-height: calc(100vh - 72px);
+    }
+
+    /* Sidebar styles */
+    .sidebar {
+      width: 250px;
+      background: linear-gradient(180deg, var(--primary), #01264a);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex-shrink: 0;
+      transition: transform 0.3s ease;
+    }
+    .sidebar.hidden {
+      transform: translateX(-100%);
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      z-index: 1300;
+    }
+    .sidebar.open {
+      transform: translateX(0);
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      z-index: 1300;
+    }
+    .sidebar button {
+      background: rgba(255,255,255,0.09);
+      color: white;
+      text-align: left;
+      font-weight: 500;
+      padding: 12px 14px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: background 0.2s ease;
+    }
+    .sidebar button:hover, .sidebar button:focus {
+      background: rgba(255,255,255,0.18);
+    }
+
+    /* Main content */
+    .main { flex: 1; padding: 20px; overflow-x: auto; }
+    section { display: none; }
+    section.active { display: block; animation: fadeIn .25s ease; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Cards and layout styles for responsiveness */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 15px;
+      margin: 16px 0 20px;
+    }
+    .card, .panel {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+      border: 1px solid rgba(0,0,0,0.03);
+    }
+    .card h3 { font-size: 0.95rem; margin-bottom: 8px; color: var(--muted); }
+    .card p { font-size: 1.3rem; font-weight: 700; color: var(--primary); }
+
+    /* Metric grid for dashboard stats */
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 15px;
+    }
+    .metricCard {
+      background: linear-gradient(135deg, #f8fbff, #eef5ff);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      font-weight: 600;
+      color: var(--muted);
+    }
+    .metricCard b {
+      display: block;
+      margin-top: 8px;
+      color: var(--primary);
+      font-size: 1.05rem;
+    }
+
+    /* Forms styling */
+    form {
+      background: var(--surface);
+      padding: 16px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    form input, form select {
+      width: 100%;
+      padding: 11px 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      outline: none;
+      background: white;
+    }
+    form input:focus, form select:focus {
+      border-color: var(--accent);
+    }
+
+    /* Buttons */
+    .submit, .btn-primary { background: var(--primary); color: white; }
+    .btn-success { background: var(--success); color: white; }
+    .btn-warning { background: #ffc107; color: #212529; }
+    .btn-info { background: #17a2b8; color: white; }
+    .btn-purple { background: #6f42c1; color: white; }
+    .btn-orange { background: #fd7e14; color: white; }
+    .btn-teal { background: #20c997; color: white; }
+    .btn-danger { background: var(--danger); color: white; }
+
+    /* Tables */
+    .table-container { overflow-x: auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--surface);
+      margin-top: 14px;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+    th, td { padding: 11px 10px; border-bottom: 1px solid #edf1f5; text-align: left; }
+    th { background: var(--primary); color: white; font-weight: 600; }
+    tr:hover td { background: #fafcff; }
+
+    /* Inline action buttons */
+    .inline-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .inline-actions button { padding: 7px 10px; font-size: 0.88rem; }
+
+    /* Notifications */
+    #notifications {
+      margin-bottom: 15px;
+      padding: 12px 14px;
+      background: #fff8e1;
+      border: 1px solid #ffe08a;
+      border-radius: 12px;
+      display: none;
+    }
+
+    /* Responsive media queries for mobile and tablets */
+    @media(max-width:768px){
+      #menuToggle { display: block; }
+      header { flex-direction: column; align-items: flex-start; }
+      .container { flex-direction: column; }
+      .sidebar {
+        position: fixed;
+        top: 0; left: 0; bottom: 0;
+        width: min(88vw, 320px);
+        box-shadow: 14px 0 40px rgba(0,0,0,0.25);
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+        z-index: 1300;
+      }
+      .sidebar.open { transform: translateX(0); }
+    }
+  </style>
+</head>
+<body>
+<!-- Login Overlay -->
+<div id="loginOverlay" style="
+  position: fixed; inset: 0; display: flex; justify-content: center; align-items: center; padding: 24px; z-index: 9999;
+  background: radial-gradient(circle at top right, rgba(37,117,252,0.22), transparent 28%), linear-gradient(135deg, #021a35 0%, #003366 45%, #0b4f9c 100%);
+  font-family: 'Poppins', sans-serif; overflow: auto;">
+  <div style="position:absolute; inset:0; backdrop-filter: blur(6px);"></div>
+  <div style="position: relative; max-width: 1080px; width: 100%; display: grid; grid-template-columns: 1.1fr 0.9fr; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.16); border-radius: 24px; overflow: hidden; box-shadow: 0 30px 60px rgba(0,0,0,0.35);">
+    <!-- Left side info -->
+    <div style="padding: 48px 42px; background: linear-gradient(160deg, rgba(255,255,255,0.12), rgba(255,255,255,0.04)); color:#fff; display:flex; flex-direction:column; justify-content:space-between; min-height:560px;">
+      <div>
+        <div style="display:inline-flex; align-items:center; gap:10px; padding:8px 14px; border-radius:999px; background: rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.16); font-size:0.9rem; margin-bottom:22px;">
+          <span style="width:10px; height:10px; border-radius:50%; background:#7CFFB2; display:inline-block;"></span>
+          Secure Scheme Management Portal
+        </div>
+        <h1 style="font-size:1.6rem; line-height:1.13; margin:0 0 14px 0; font-weight:600;">OPM Arua Staff Savings and Loan Scheme System</h1>
+        <p style="font-size:1rem; line-height:1.4; color:rgba(255,255,255,0.88); max-width:540px; margin:0;">Manage members, savings, loans, repayments, reports, and audit trails from one digital workspace built for Scheme's operations.</p>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:16px; margin-top:28px;">
+        <div style="padding:18px; border-radius:18px; background: rgba(255,255,255,0.10); border:1px solid rgba(255,255,255,0.12);">
+          <div style="font-size:1.25rem; font-weight:600; margin-bottom:6px;">Members</div>
+          <div style="color:rgba(255,255,255,0.82); font-size:0.95rem;">Profile management, share capital, and member account tracking.</div>
+        </div>
+        <div style="padding:18px; border-radius:18px; background: rgba(255,255,255,0.10); border:1px solid rgba(255,255,255,0.12);">
+          <div style="font-size:1.25rem; font-weight:600; margin-bottom:6px;">Loans</div>
+          <div style="color:rgba(255,255,255,0.82); font-size:0.95rem;">Approvals, eligibility checks, balances, and repayment schedules.</div>
+        </div>
+        <div style="padding:18px; border-radius:18px; background: rgba(255,255,255,0.10); border:1px solid rgba(255,255,255,0.12);">
+          <div style="font-size:1.25rem; font-weight:600; margin-bottom:6px;">Savings</div>
+          <div style="color:rgba(255,255,255,0.82); font-size:0.95rem;">Capture deposits from cash, bank, mobile money, and salary.</div>
+        </div>
+        <div style="padding:18px; border-radius:18px; background: rgba(255,255,255,0.10); border:1px solid rgba(255,255,255,0.12);">
+          <div style="font-size:1.25rem; font-weight:600; margin-bottom:6px;">Reports</div>
+          <div style="color:rgba(255,255,255,0.82); font-size:0.95rem;">Generate statements, summaries, dividends, and audit records.</div>
+        </div>
+      </div>
+    </div>
+    <!-- Right login info -->
+    <div style="background:#fff; padding:42px 34px; display:flex; flex-direction:column; justify-content:center; max-width:420px; width:100%; margin:auto;">
+      <div style="margin-bottom:24px;">
+        <div style="font-size:0.9rem; font-weight:600; color:#0b4f9c; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:10px;">Welcome back</div>
+        <h2 style="color:#0f172a; margin:0 0 8px 0; font-size:2rem; font-weight:600;">Sign in</h2>
+        <p style="color:#64748b; margin:0; line-height:1.7;">Enter your account details to access the SACCO dashboard or your member self-service portal.</p>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:16px;">
+        <label for="username" style="font-weight:500; font-size:0.95rem;">Username / Staff ID</label>
+        <input id="username" placeholder="Enter username or staff ID" style="width:100%; padding:15px 16px; border:1px solid #dbe2ea; border-radius:14px; font-size:1rem; outline:none; transition:all 0.25s ease;">
+        <label for="password" style="font-weight:500; font-size:0.95rem;">Password</label>
+        <div style="position:relative;">
+          <input id="password" type="password" placeholder="Enter password" style="width:100%; padding:15px 52px 15px 16px; border:1px solid #dbe2ea; border-radius:14px; font-size:1rem; outline:none; transition:all 0.25s ease;">
+          <button type="button" onclick="togglePassword(this)" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; font-weight:600; font-size:0.92rem; color:#64748b;">Show</button>
+        </div>
+        <button onclick="login()" class="submit" style="width:100%; padding:15px; border:none; border-radius:14px; background:linear-gradient(135deg, #003366, #0b63ce); color:#fff; font-size:1rem; font-weight:600; cursor:pointer; box-shadow:0 14px 24px rgba(11,99,206,0.25); transition:transform 0.2s ease;"
+          onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 18px 28px rgba(11,99,206,0.30)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 14px 24px rgba(11,99,206,0.25)'">
+          Login to System
+        </button>
+      </div>
+      <div style="margin-top:22px; padding:14px 16px; background:#eff6ff; border:1px solid #dbeafe; border-radius:14px; color:#1e3a8a; font-size:0.92rem; line-height:1.7;">
+        Admin and treasurer use username and password. Members can sign in using their Staff ID.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Main app content -->
+<div id="app" style="display:none; width:100%;">
+  <header>
+    <h2 style="margin:0; font-size:1.1rem;">OPM Arua Staff Savings and Loan Scheme System</h2>
+    <button id="menuToggle" aria-label="Toggle menu" aria-expanded="false" style="display:none; background:none; border:none; color:#fff; font-size:1.8rem; cursor:pointer;" onclick="toggleMenu()">☰</button>
+    <div class="header-actions" style="display:flex; gap:8px;">
+      <button onclick="toggleDark()">Dark</button>
+      <button onclick="backup()">Backup</button>
+      <button onclick="restore()">Restore</button>
+      <button onclick="logout()">Logout</button>
+    </div>
+  </header>
+  <div class="container">
+    <nav id="sidebar" class="sidebar hidden" aria-hidden="true">
+      <button class="admin-only" onclick="showSection('dashboard')">Dashboard</button>
+      <button class="admin-only" onclick="showSection('members')">Members</button>
+      <button class="admin-only" onclick="showSection('savings')">Savings</button>
+      <button class="admin-only" onclick="showSection('loans')">Loans</button>
+      <button class="admin-only" onclick="showSection('repayments')">Repayments</button>
+      <button class="admin-only" onclick="showSection('dividends')">Interest / Dividends</button>
+      <button class="admin-only" onclick="showSection('reports')">Reports</button>
+      <button class="admin-only" onclick="showSection('audit')">Audit</button>
+      <button class="member-only" onclick="showSection('memberPortal')">My Account</button>
+      <button onclick="downloadStatement()">Download My Statement</button>
+    </nav>
+    <div class="main">
+      <!-- Dashboard -->
+      <section id="dashboard" class="active">
+        <h2>Dashboard</h2>
+        <div class="cards">
+          <div class="card"><h3>Total Members</h3><p id="dashboardMembersCount">0</p></div>
+          <div class="card"><h3>Total Savings</h3><p id="dashboardSavingsCount">0 UGX</p></div>
+          <div class="card"><h3>Total Loans</h3><p id="dashboardLoanCount">0 UGX</p></div>
+          <div class="card"><h3>Loan Balance</h3><p id="dashboardBalanceCount">0 UGX</p></div>
+        </div>
+        <div id="notifications"></div>
+        <div class="panel">
+          <canvas id="financeChart" style="max-width:100%; height:150px;"></canvas>
+        </div>
+      </section>
+      <!-- Member self service -->
+      <section id="memberPortal" class="member-only">
+        <h2>My Account</h2>
+        <div class="cards">
+          <div class="card"><h3>Total Savings</h3><p id="mSavings">0 UGX</p></div>
+          <div class="card"><h3>Total Loan</h3><p id="mLoan">0 UGX</p></div>
+          <div class="card"><h3>Loan Balance</h3><p id="mBalance">0 UGX</p></div>
+          <div class="card"><h3>Dividends</h3><p id="mDividend">0 UGX</p></div>
+        </div>
+        <h3>My Savings Transactions</h3>
+        <div class="table-container"><table><thead><tr><th>Date</th><th>Amount</th><th>Source</th><th>Status</th></tr></thead><tbody id="memberSavingsTable"></tbody></table></div>
+        <h3>My Loan Records</h3>
+        <div class="table-container"><table><thead><tr><th>Loan Date</th><th>Amount</th><th>Interest</th><th>Months</th><th>Balance</th></tr></thead><tbody id="memberLoanTable"></tbody></table></div>
+        <h3>My Repayments</h3>
+        <div class="table-container"><table><thead><tr><th>Date</th><th>Amount</th><th>Method</th></tr></thead><tbody id="memberRepayTable"></tbody></table></div>
+      </section>
+
+      <!-- Members management -->
+      <section id="members">
+        <h2>Members Management</h2>
+        <div class="cards">
+          <div class="card"><h3>Total Members</h3><p id="membersCount">0</p></div>
+          <div class="card"><h3>Active Members</h3><p id="activeMembers">0</p></div>
+          <div class="card"><h3>Total Share Capital</h3><p id="totalShares">0 UGX</p></div>
+        </div>
+        <div id="memberStatement"></div>
+        <!-- Register member -->
+        <h3>Add / Register Member</h3>
+        <form id="memberForm" style="display:grid; grid-template-columns:1fr; gap:10px;">
+          <input id="name" placeholder="Full Name" required>
+          <input id="staff" placeholder="Staff ID / Member ID" required>
+          <select id="gender" required><option value="">Gender</option><option>Male</option><option>Female</option></select>
+          <input id="nid" placeholder="National ID">
+          <input id="dept" placeholder="Position / Department" required>
+          <input id="phone" placeholder="Phone Number" required>
+          <input id="email" placeholder="Email Address" type="email" required>
+          <input id="address" placeholder="Address">
+          <input id="share" type="number" placeholder="Initial Share Capital" required>
+          <input id="joinDate" type="date" required>
+          <select id="status" required><option value="Active">Active</option><option value="Suspended">Suspended</option></select>
+          <label for="photo">Profile Photo</label>
+          <input type="file" id="photo" accept="image/*" />
+          <img id="photoPreview" src="" style="display:none; max-width:100px; margin-top:10px; border-radius:10px;">
+          <button type="submit" class="submit">Register Member</button>
+        </form>
+        <div class="toolbar" style="margin-top:10px;">
+          <input id="searchMember" placeholder="Search name / staff / phone..." onkeyup="searchMembers()" style="width:100%; padding:8px; border:1px solid #dbe2ea; border-radius:8px;">
+          <select id="filterDept" onchange="filterMembers()" style="width:100%; margin-top:8px; padding:8px; border:1px solid #dbe2ea; border-radius:8px;">
+            <option value="">Filter by Department</option>
+          </select>
+        </div>
+        <div class="table-container"><table><thead><tr><th>Photo</th><th>Name</th><th>Staff ID</th><th>Gender</th><th>Position</th><th>Phone</th><th>Shares</th><th>Status</th><th>Actions</th></tr></thead><tbody id="memberTable"></tbody></table></div>
+      </section>
+
+      <!-- Savings -->
+      <section id="savings">
+        <h2>Savings</h2>
+        <form id="savingForm" style="display:grid; gap:10px;">
+          <div style="display:flex; flex-wrap:wrap; gap:10px;">
+            <input id="sMember" placeholder="Staff ID" required>
+            <input id="sDate" type="date" required>
+            <input id="sAmount" type="number" placeholder="Amount" required>
+            <select id="sSource" required><option value="">Select Source</option><option>Cash</option><option>Mobile Money</option><option>Bank</option><option>From Monthly Salary</option></select>
+            <input id="sReference" placeholder="Transaction Reference / ID">
+            <input id="sNotes" placeholder="Notes / Description">
+            <select id="sStatus" required><option value="Pending">Pending</option><option value="Confirmed">Confirmed</option></select>
+          </div>
+          <button type="submit" class="submit">Add Saving</button>
+        </form>
+        <div class="panel" style="margin-top:16px;">
+          <h3>Total Savings: <span id="totalSavings">0 UGX</span></h3>
+          <p style="margin-top:8px; color:var(--muted);">Total Confirmed Savings: <span id="confirmedSavings">0 UGX</span></p>
+        </div>
+        <div class="table-container"><table><thead><tr><th>Member</th><th>Date</th><th>Amount</th><th>Source</th><th>Reference</th><th>Status</th><th>Notes</th><th>Action</th></tr></thead><tbody id="savingTable"></tbody></table></div>
+      </section>
+
+      <!-- Dividends -->
+      <section id="dividends">
+        <h2>Interests</h2>
+        <div class="panel">
+          <input id="profit" type="number" placeholder="Total SACCO Profit" />
+          <button onclick="calculateDividends()" class="btn btn-primary" style="margin-top:10px;">Calculate</button>
+        </div>
+        <div class="table-container"><table><thead><tr><th>Member ID</th><th>Name</th><th>Savings</th><th>Dividend</th></tr></thead><tbody id="dividendTable"></tbody></table></div>
+      </section>
+
+      <!-- Loans -->
+      <section id="loans">
+        <h2>Loans</h2>
+        <form id="loanForm" style="display:grid; gap:10px;">
+          <div style="display:flex; flex-wrap:wrap; gap:10px;">
+            <input id="loanMember" placeholder="Staff ID" required />
+            <input id="loanAmount" type="number" placeholder="Amount" required />
+            <input id="interest" type="number" placeholder="Interest %" required />
+            <input id="months" type="number" placeholder="Months" required />
+            <input id="loanDate" type="date" required />
+            <input id="loanPurpose" placeholder="Purpose / Type" required />
+            <input id="loanRef" placeholder="Loan Reference / ID" />
+            <select id="loanStatus" required><option value="Pending">Pending</option><option value="Approved">Approved</option><option value="Rejected">Rejected</option></select>
+          </div>
+          <button class="submit" type="submit">Apply Loan</button>
+        </form>
+        <div class="table-container"><table><thead><tr><th>Member</th><th>Amount</th><th>Interest %</th><th>Months</th><th>Status</th><th>Balance</th><th>Action</th></tr></thead><tbody id="loanTable"></tbody></table></div>
+      </section>
+
+      <!-- Repayments -->
+      <section id="repayments">
+        <h2>Loan Repayments</h2>
+        <form id="repayForm" style="display:grid; gap:10px;">
+          <div style="display:flex; flex-wrap:wrap; gap:10px;">
+            <input id="repayMember" placeholder="Staff ID" required />
+            <input id="repayAmount" type="number" placeholder="Amount" required />
+            <input id="paymentDate" type="date" required />
+            <select id="paymentMethod" required><option value="">Select Method</option><option>Cash</option><option>Mobile Money</option><option>Bank Transfer</option></select>
+          </div>
+          <button class="submit" type="submit">Record Payment</button>
+        </form>
+        <div class="table-container"><table><thead><tr><th>Member</th><th>Paid</th><th>Payment Date</th><th>Method</th><th>Balance</th></tr></thead><tbody id="repayTable"></tbody></table></div>
+      </section>
+
+      <!-- Reports -->
+      <section id="reports" style="max-width:1200px; margin:auto;">
+        <h2 style="text-align:center; margin-bottom:20px;">Dashboard & Reports</h2>
+        <div class="panel">
+          <h3 style="margin-bottom:15px;">Dashboard Summary</h3>
+          <div id="dashboardMetrics" class="metric-grid"></div>
+        </div>
+        <div class="report-buttons" style="display:flex; flex-wrap:wrap; gap:12px; justify-content:center; margin:18px 0 24px;">
+          <button onclick="generateMemberSummary()" class="btn btn-primary">Member Summary</button>
+          <button onclick="generateSavingsReport()" class="btn btn-success">Savings Report</button>
+          <button onclick="generateDividendsReport()" class="btn btn-warning">Dividends</button>
+          <button onclick="generateIncomeStatement()" class="btn btn-info">Income Statement</button>
+          <button onclick="generateBalanceSheet()" class="btn btn-purple">Balance Sheet</button>
+          <button onclick="generateCashFlow()" class="btn btn-orange">Cash Flow</button>
+          <button onclick="exportCurrentReport()" class="btn btn-teal">Export to Excel</button>
+        </div>
+        <div class="panel" id="reportOutput">Generated report will appear here.</div>
+      </section>
+
+      <!-- Audit logs -->
+      <section id="audit">
+        <h2>Audit Logs</h2>
+        <div class="table-container">
+          <table>
+            <thead><tr><th>Time</th><th>User</th><th>Action</th></tr></thead>
+            <tbody id="auditTable"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script>
+    // Data storage
+    let members = JSON.parse(localStorage.getItem('members')) || [];
+    let savings = JSON.parse(localStorage.getItem('savings')) || [];
+    let loans = JSON.parse(localStorage.getItem('loans')) || [];
+    let repayments = JSON.parse(localStorage.getItem('repayments')) || [];
+    let dividendsData = JSON.parse(localStorage.getItem('dividends')) || [];
+    let audit = JSON.parse(localStorage.getItem('audit')) || [];
+    let financials = JSON.parse(localStorage.getItem('financials')) || {};
+
+    const users = [
+      { u: 'admin', p: 'admin123', role: 'admin' },
+      { u: 'treasurer', p: '123', role: 'treasurer' }
+    ];
+    let currentUser = null;
+    let currentRole = null;
+    let dashboardChart = null;
+
+    // Utility functions
+    function save() {
+      localStorage.setItem('members', JSON.stringify(members));
+      localStorage.setItem('savings', JSON.stringify(savings));
+      localStorage.setItem('loans', JSON.stringify(loans));
+      localStorage.setItem('repayments', JSON.stringify(repayments));
+      localStorage.setItem('dividends', JSON.stringify(dividendsData));
+      localStorage.setItem('audit', JSON.stringify(audit));
+      localStorage.setItem('financials', JSON.stringify(financials));
+    }
+
+    function money(x) {
+      return Number(x || 0).toLocaleString() + ' UGX';
+    }
+
+    function log(action) {
+      audit.push({ time: new Date().toLocaleString(), user: currentUser || 'System', action });
+      save();
+      renderAudit();
+    }
+
+    function isAdmin() {
+      return currentRole === 'admin' || currentRole === 'treasurer';
+    }
+
+    // Login
+    function login() {
+      const u = document.getElementById('username').value.trim();
+      const p = document.getElementById('password').value.trim();
+      const user = users.find(x => x.u === u && x.p === p);
+      if (user) {
+        currentUser = user.u;
+        currentRole = user.role;
+      } else {
+        const member = members.find(m => m.staff === u);
+        if (member) {
+          currentUser = member.staff;
+          currentRole = 'member';
+        } else {
+          alert('Invalid credentials');
+          return;
+        }
+      }
+      document.getElementById('loginOverlay').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+      if (isAdmin()) {
+        document.querySelectorAll('.member-only').forEach(e => e.style.display = 'none');
+        document.querySelectorAll('.admin-only').forEach(e => e.style.display = 'block');
+        showSection('dashboard');
+        updateUI();
+      } else {
+        document.querySelectorAll('.admin-only').forEach(e => e.style.display='none');
+        document.querySelectorAll('.member-only').forEach(e => e.style.display='block');
+        showSection('memberPortal');
+        showMemberData(currentUser);
+        generateMemberStatement(currentUser);
+      }
+      log('User logged in: ' + currentUser);
+    }
+
+    function logout() {
+      location.reload();
+    }
+
+    // Show section
+    function showSection(id) {
+      document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
+      const sec = document.getElementById(id);
+      if (sec) sec.classList.add('active');
+      if (id==='reports') updateDashboard();
+    }
+
+    // Toggle mobile menu
+    function toggleMenu() {
+      const sidebar = document.getElementById('sidebar');
+      sidebar.classList.toggle('open');
+      const expanded = sidebar.classList.contains('open');
+      document.getElementById('menuToggle').setAttribute('aria-expanded', String(expanded));
+    }
+
+    // Toggle dark mode
+    function toggleDark() {
+      document.body.classList.toggle('darkMode');
+    }
+
+    // Password toggle
+    function togglePassword(btn) {
+      const pwd = document.getElementById('password');
+      if (pwd.type==='password') {
+        pwd.type='text'; btn.textContent='Hide';
+      } else {
+        pwd.type='password'; btn.textContent='Show';
+      }
+    }
+
+    // Load & Save
+    function updateUI() {
+      populateDeptFilter();
+      renderMembersTable();
+      renderSavings();
+      renderLoans();
+      renderRepayments();
+      renderDividends();
+      renderAudit();
+      updateSummary();
+      updateSavingsSummary();
+      updateDashboard();
+      if (currentRole==='member') {
+        showMemberData(currentUser);
+        generateMemberStatement(currentUser);
+      }
+    }
+
+    // Dashboard data
+    function getTotals() {
+      const totalMembers = members.length;
+      const activeMembers = members.filter(m => m.status==='Active').length;
+      const totalShareCap = members.reduce((a,m) => a + Number(m.share||0),0);
+      const totalSavingsAmt = savings.reduce((a,s) => a + Number(s.amount||0),0);
+      const confirmedSavingsAmt = savings.filter(s=>s.status==='Confirmed').reduce((a,s)=>a+Number(s.amount||0),0);
+      const totalLoansAmt = loans.reduce((a,l)=>a+Number(l.amount||0),0);
+      const totalLoanBalance = loans.reduce((a,l)=>a+Number(l.balance||0),0);
+      const totalRepaid = repayments.reduce((a,r)=>a+Number(r.amount||0),0);
+      const totalDividends = dividendsData.reduce((a,d)=>a+Number(d.dividend||0),0);
+      const netIncome = Number((financials.incomeStatement||[]).find(r=>r[0]==='Net Income')?.[1]||0);
+      return {totalMembers, activeMembers, totalShareCap, totalSavingsAmt, confirmedSavingsAmt, totalLoansAmt, totalLoanBalance, totalRepaid, totalDividends, netIncome};
+    }
+
+    function updateSummary() {
+      const t = getTotals();
+      document.getElementById('dashboardMembersCount').textContent = t.totalMembers;
+      document.getElementById('dashboardSavingsCount').textContent = money(t.totalSavingsAmt);
+      document.getElementById('dashboardLoanCount').textContent = money(t.totalLoansAmt);
+      document.getElementById('dashboardBalanceCount').textContent = money(t.totalLoanBalance);
+    }
+
+    function updateDashboard() {
+      const t = getTotals();
+      document.getElementById('dashboardMembersCount').textContent = t.totalMembers;
+      document.getElementById('dashboardSavingsCount').textContent = money(t.totalSavingsAmt);
+      document.getElementById('dashboardLoanCount').textContent = money(t.totalLoansAmt);
+      document.getElementById('dashboardBalanceCount').textContent = money(t.totalLoanBalance);
+      // Chart
+      const ctx = document.getElementById('financeChart').getContext('2d');
+      if (dashboardChart) dashboardChart.destroy();
+      dashboardChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Members', 'Savings', 'Loans', 'Loan Balance'],
+          datasets: [{ label: 'Stats', data: [t.totalMembers, t.totalSavingsAmt, t.totalLoansAmt, t.totalLoanBalance], backgroundColor: ['#4e79a7','#f28e2b','#e15759','#76b7b2'] }]
+        },
+        options: {
+          responsive:true, maintainAspectRatio:false,
+          plugins:{ legend:{display:false} },
+          scales:{ y:{ beginAtZero:true } }
+        }
+      });
+    }
+
+    function populateDeptFilter() {
+      const depts = [...new Set(members.map(m=>m.dept).filter(Boolean))];
+      const filter = document.getElementById('filterDept');
+      filter.innerHTML='<option value="">Filter by Department</option>';
+      depts.forEach(d => {
+        const opt = document.createElement('option');
+        opt.value=d; opt.textContent=d;
+        filter.appendChild(opt);
+      });
+    }
+
+    // Member photo preview
+    document.getElementById('photo').addEventListener('change', () => {
+      const file = document.getElementById('photo').files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        document.getElementById('photoPreview').src=reader.result;
+        document.getElementById('photoPreview').style.display='block';
+      }
+      reader.readAsDataURL(file);
+    });
+
+    // Members management
+    let editMemberIndex = null;
+    document.getElementById('memberForm').onsubmit = function(e) {
+      e.preventDefault();
+      const m = {
+        name: document.getElementById('name').value.trim(),
+        staff: document.getElementById('staff').value.trim(),
+        gender: document.getElementById('gender').value,
+        nid: document.getElementById('nid').value.trim(),
+        dept: document.getElementById('dept').value.trim(),
+        phone: document.getElementById('phone').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        address: document.getElementById('address').value.trim(),
+        share: parseFloat(document.getElementById('share').value||0),
+        joinDate: document.getElementById('joinDate').value,
+        status: document.getElementById('status').value,
+        photo: document.getElementById('photoPreview').src || ''
+      };
+      if (!m.staff || !m.name) {
+        alert('Fill all required member details');
+        return;
+      }
+      if (editMemberIndex===null && members.some(x=>x.staff===m.staff)) {
+        alert('Staff ID exists');
+        return;
+      }
+      if (editMemberIndex!==null) {
+        members[editMemberIndex]=m;
+        log(`Edited member: ${m.name} (${m.staff})`);
+        editMemberIndex=null;
+      } else {
+        members.push(m);
+        log(`Added member: ${m.name} (${m.staff})`);
+      }
+      save();
+      document.getElementById('memberForm').reset();
+      document.getElementById('photoPreview').style.display='none';
+      updateUI();
+    }
+
+    function renderMembersTable(filter=members) {
+      const tbody=document.getElementById('memberTable');
+      tbody.innerHTML='';
+      filter.forEach((m,i) => {
+        const idx=members.findIndex(x=>x.staff===m.staff);
+        const tr=document.createElement('tr');
+        tr.innerHTML=`
+          <td><img src="${m.photo||''}" style="width:50px;height:50px;object-fit:cover;border-radius:8px;background:#e5e7eb"></td>
+          <td>${m.name}</td>
+          <td>${m.staff}</td>
+          <td>${m.gender||'-'}</td>
+          <td>${m.dept||'-'}</td>
+          <td>${m.phone||'-'}</td>
+          <td>${money(m.share)}</td>
+          <td>${m.status||'-'}</td>
+          <td>
+            <div class="inline-actions">
+              <button class="btn btn-info" onclick="editMember(${idx})">Edit</button>
+              <button class="btn btn-danger" onclick="deleteMember(${idx})">Delete</button>
+              <button class="btn btn-primary" onclick="generateMemberCard('${m.staff}')">ID Card</button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function editMember(i) {
+      const m=members[i];
+      if(!m) return;
+      document.getElementById('name').value=m.name;
+      document.getElementById('staff').value=m.staff;
+      document.getElementById('gender').value=m.gender||'';
+      document.getElementById('nid').value=m.nid||'';
+      document.getElementById('dept').value=m.dept||'';
+      document.getElementById('phone').value=m.phone||'';
+      document.getElementById('email').value=m.email||'';
+      document.getElementById('address').value=m.address||'';
+      document.getElementById('share').value=m.share||0;
+      document.getElementById('joinDate').value=m.joinDate||'';
+      document.getElementById('status').value=m.status||'Active';
+      if (m.photo) {
+        document.getElementById('photoPreview').src=m.photo;
+        document.getElementById('photoPreview').style.display='block';
+      } else {
+        document.getElementById('photoPreview').src='';
+        document.getElementById('photoPreview').style.display='none';
+      }
+      editMemberIndex=i;
+    }
+
+    function deleteMember(i) {
+      if(!members[i]) return;
+      if(!confirm('Delete this member?')) return;
+      log(`Deleted member: ${members[i].name} (${members[i].staff})`);
+      members.splice(i,1);
+      save();
+      updateUI();
+    }
+
+    function searchMembers() {
+      const q=document.getElementById('searchMember').value.toLowerCase();
+      const filtered=members.filter(m =>
+        (m.name||'').toLowerCase().includes(q) ||
+        (m.staff||'').toLowerCase().includes(q) ||
+        (m.phone||'').toLowerCase().includes(q)
+      );
+      renderMembersTable(filtered);
+    }
+
+    function filterMembers() {
+      const dept=document.getElementById('filterDept').value;
+      if(!dept) return renderMembersTable();
+      renderMembersTable(members.filter(m=>m.dept===dept));
+    }
+
+    // Savings
+    let editSavingIndex=null;
+    document.getElementById('savingForm').onsubmit=function(e){
+      e.preventDefault();
+      const staffID=document.getElementById('sMember').value.trim();
+      const memberName=findMemberName(staffID);
+      if(!memberName){ alert('Member not found'); return; }
+      const s={
+        staffID,
+        memberName,
+        date: document.getElementById('sDate').value,
+        amount: parseFloat(document.getElementById('sAmount').value||0),
+        source: document.getElementById('sSource').value,
+        reference: document.getElementById('sReference').value.trim(),
+        notes: document.getElementById('sNotes').value.trim(),
+        status: document.getElementById('sStatus').value
+      };
+      if(editSavingIndex!==null){ savings[editSavingIndex]=s; log(`Edited saving for ${s.staffID}`); editSavingIndex=null; }
+      else { savings.push(s); log(`Added saving for ${s.staffID}`); }
+      save(); document.getElementById('savingForm').reset(); updateUI();
+    }
+
+    function renderSavings() {
+      const tbody=document.getElementById('savingTable'); tbody.innerHTML='';
+      savings.forEach((s,i)=>{
+        const tr=document.createElement('tr');
+        tr.innerHTML=`
+          <td>${s.memberName} (${s.staffID})</td>
+          <td>${s.date}</td>
+          <td>${money(s.amount)}</td>
+          <td>${s.source}</td>
+          <td>${s.reference||'-'}</td>
+          <td>${s.status}</td>
+          <td>${s.notes||'-'}</td>
+          <td>
+            <div class="inline-actions">
+              <button class="btn btn-info" onclick="editSaving(${i})">Edit</button>
+              <button class="btn btn-danger" onclick="deleteSaving(${i})">Delete</button>
+            </div>
+          </td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function editSaving(i) {
+      const s=savings[i];
+      if(!s) return;
+      document.getElementById('sMember').value=s.staffID;
+      document.getElementById('sDate').value=s.date;
+      document.getElementById('sAmount').value=s.amount;
+      document.getElementById('sSource').value=s.source;
+      document.getElementById('sReference').value=s.reference||'';
+      document.getElementById('sNotes').value=s.notes||'';
+      document.getElementById('sStatus').value=s.status||'Pending';
+      editSavingIndex=i;
+    }
+
+    function deleteSaving(i) {
+      if(!savings[i]) return;
+      if(!confirm('Delete this saving?')) return;
+      log(`Deleted saving for ${savings[i].staffID}`);
+      savings.splice(i,1);
+      save(); updateUI();
+    }
+
+    function updateSavingsSummary() {
+      const t=getTotals();
+      document.getElementById('totalSavings').textContent=money(t.totalSavingsAmt);
+      document.getElementById('confirmedSavings').textContent=money(t.confirmedSavingsAmt);
+    }
+
+    // Dividends
+    function calculateDividends() {
+      const profit=parseFloat(document.getElementById('profit').value||0);
+      if(profit<=0){ alert('Enter profit'); return;}
+      const totalSavings=savings.reduce((a,s)=>a+Number(s.amount||0),0);
+      if(totalSavings<=0){ alert('No savings'); return;}
+      dividendsData=members.map(m=>{
+        const memberSavings=savings.filter(s=>s.staffID===m.staff).reduce((a,s)=>a+Number(s.amount||0),0);
+        const dividend=(memberSavings/totalSavings)*profit;
+        return { staff: m.staff, name: m.name, savings: memberSavings, dividend };
+      });
+      log('Dividends calculated'); save(); renderDividends(); updateUI();
+    }
+
+    function renderDividends() {
+      const tbody=document.getElementById('dividendTable');
+      tbody.innerHTML='';
+      dividendsData.forEach(d=>{
+        const tr=document.createElement('tr');
+        tr.innerHTML=`<td>${d.staff}</td><td>${d.name}</td><td>${money(d.savings)}</td><td>${money(d.dividend)}</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Loans
+    let editLoanIdx=null;
+    document.getElementById('loanForm').onsubmit=function(e){
+      e.preventDefault();
+      const staffID=document.getElementById('loanMember').value.trim();
+      const amount=parseFloat(document.getElementById('loanAmount').value||0);
+      const interest=parseFloat(document.getElementById('interest').value||0);
+      const months=parseInt(document.getElementById('months').value||0);
+      const date=document.getElementById('loanDate').value;
+      const purpose=document.getElementById('loanPurpose').value.trim();
+      const reference=document.getElementById('loanRef').value.trim();
+      const status=document.getElementById('loanStatus').value;
+      const memberName=findMemberName(staffID);
+      if(!memberName){ alert('Member not found'); return; }
+      if(!staffID || amount<=0 || interest<0 || months<=0 || !date){ alert('Fill all'); return; }
+
+      const eligible=calculateLoanEligibility(staffID);
+      if(amount>eligible){ alert('Exceeds eligibility: '+money(eligible)); return; }
+
+      const totalInterest=(amount*interest)/100;
+      const totalRepayment=amount+totalInterest;
+      const loan={ staffID, memberName, date, amount, interest, months, purpose, reference, status, balance: totalRepayment, totalRepayment };
+      if(editLoanIdx===null){ loans.push(loan); log(`Added loan for ${memberName}`); }
+      else { loans[editLoanIdx]=loan; log(`Edited loan for ${memberName}`); editLoanIdx=null; }
+      save(); updateUI();
+    }
+
+    function renderLoans() {
+      const tbody=document.getElementById('loanTable'); tbody.innerHTML='';
+      loans.forEach((l,i)=>{
+        const tr=document.createElement('tr');
+        tr.innerHTML=`
+          <td>${l.memberName} (${l.staffID})</td>
+          <td>${money(l.amount)}</td>
+          <td>${l.interest}</td>
+          <td>${l.months}</td>
+          <td>${l.status}</td>
+          <td>${money(l.balance)}</td>
+          <td>
+            <div class="inline-actions">
+              <button class="btn btn-info" onclick="editLoan(${i})">Edit</button>
+              <button class="btn btn-danger" onclick="deleteLoan(${i})">Delete</button>
+              <button class="btn btn-primary" onclick="viewSchedule(${i})">Schedule</button>
+            </div>
+          </td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function editLoan(i) {
+      const l=loans[i];
+      if(!l) return;
+      document.getElementById('loanMember').value=l.staffID;
+      document.getElementById('loanAmount').value=l.amount;
+      document.getElementById('interest').value=l.interest;
+      document.getElementById('months').value=l.months;
+      document.getElementById('loanDate').value=l.date;
+      document.getElementById('loanPurpose').value=l.purpose;
+      document.getElementById('loanRef').value=l.reference;
+      document.getElementById('loanStatus').value=l.status;
+      editLoanIdx=i;
+    }
+
+    function deleteLoan(i) {
+      if(!loans[i]) return;
+      if(!confirm('Delete this loan?')) return;
+      log(`Deleted loan for ${loans[i].memberName}`);
+      loans.splice(i,1);
+      save(); updateUI();
+    }
+
+    function generateAmortization(loan) {
+      const schedule=[];
+      const monthlyInterest=(loan.amount*(loan.interest/100))/loan.months;
+      const monthlyPrincipal=loan.amount/loan.months;
+      let balance=loan.amount;
+      for(let m=1; m<=loan.months; m++){
+        const payment=monthlyPrincipal+monthlyInterest;
+        balance-=monthlyPrincipal;
+        schedule.push({ month:m, payment, principal:monthlyPrincipal, interest:monthlyInterest, balance:Math.max(balance,0) });
+      }
+      return schedule;
+    }
+
+    function viewSchedule(i) {
+      const loan=loans[i];
+      if(!loan) return;
+      const schedule=generateAmortization(loan);
+      let html=`<h3 style="margin-bottom:15px">Loan Schedule</h3><table style="width:100%; border-collapse:collapse;"><tr><th>Month</th><th>Payment</th><th>Principal</th><th>Interest</th><th>Balance</th></tr>`;
+      schedule.forEach(s=> {
+        html+=`<tr><td>${s.month}</td><td>${money(s.payment)}</td><td>${money(s.principal)}</td><td>${money(s.interest)}</td><td>${money(s.balance)}</td></tr>`;
+      });
+      html+='</table>';
+      document.getElementById('reportOutput').innerHTML=html;
+      showSection('reports');
+    }
+
+    // Repayments
+      document.getElementById('repayForm').onsubmit=function(e){
+      e.preventDefault();
+      const staffID=document.getElementById('repayMember').value.trim();
+      const amount=parseFloat(document.getElementById('repayAmount').value||0);
+      const date=document.getElementById('paymentDate').value;
+      const method=document.getElementById('paymentMethod').value;
+      const memberName=findMemberName(staffID);
+      if(!memberName){ alert('Member not found'); return; }
+      if(!staffID || amount<=0 || !date || !method){ alert('Fill all'); return; }
+
+      let remaining=amount;
+      const memberLoans=loans.filter(l=>l.staffID===staffID && Number(l.balance||0)>0);
+      if(!memberLoans.length){ alert('No active loan'); return; }
+
+      memberLoans.forEach(l=>{
+        if(remaining<=0) return;
+        const pay=Math.min(Number(l.balance||0), remaining);
+        l.balance=Number(l.balance||0)-pay;
+        remaining-=pay;
+      });
+      repayments.push({ staffID, memberName, amount, paymentDate: date, method });
+      log(`Recorded repayment for ${memberName} (${staffID})`);
+      save(); document.getElementById('repayForm').reset(); renderRepayments();
+    }
+
+    function renderRepayments() {
+      const tbody=document.getElementById('repayTable'); tbody.innerHTML='';
+      repayments.forEach((r,i)=>{
+        const totalBalance=loans.filter(l=>l.staffID===r.staffID).reduce((a,l)=>a+Number(l.balance||0),0);
+        const tr=document.createElement('tr');
+        tr.innerHTML=`<td>${r.memberName} (${r.staffID})</td><td>${money(r.amount)}</td><td>${r.paymentDate}</td><td>${r.method}</td><td>${money(totalBalance)}</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Helper functions
+    function findMemberName(staffID) {
+      const m=members.find(m=>m.staff===staffID);
+      return m?m.name:'';
+    }
+
+    function calculateLoanEligibility(staffID) {
+      const memberSavings=savings.filter(s=>s.staffID===staffID).reduce((a,s)=>a+Number(s.amount||0),0);
+      return memberSavings*3;
+    }
+
+    // Show member data
+    function showMemberData(staffID) {
+      const m=members.find(m=>m.staff===staffID);
+      if(!m) return;
+      const memberSavings=savings.filter(s=>s.staffID===staffID).reduce((a,s)=>a+Number(s.amount||0),0);
+      const memberLoans=loans.filter(l=>l.staffID===staffID);
+      const totalLoan=memberLoans.reduce((a,l)=>a+Number(l.amount||0),0);
+      const totalBalance=memberLoans.reduce((a,l)=>a+Number(l.balance||0),0);
+      const div=dividendsData.find(d=>d.staff===staffID);
+      const dividendAmt=div?div.dividend:0;
+      document.getElementById('mSavings').textContent=money(memberSavings);
+      document.getElementById('mLoan').textContent=money(totalLoan);
+      document.getElementById('mBalance').textContent=money(totalBalance);
+      document.getElementById('mDividend').textContent=money(dividendAmt);
+      // populate savings table
+      const tbodySavings=document.getElementById('memberSavingsTable');
+      tbodySavings.innerHTML='';
+      savings.filter(s=>s.staffID===staffID).forEach(s=>{
+        const tr=document.createElement('tr');
+        tr.innerHTML=`<td>${s.date}</td><td>${money(s.amount)}</td><td>${s.source}</td><td>${s.status}</td>`;
+        tbodySavings.appendChild(tr);
+      });
+      // loans
+      const tbodyLoans=document.getElementById('memberLoanTable');
+      tbodyLoans.innerHTML='';
+      memberLoans.forEach(l=>{
+        const tr=document.createElement('tr');
+        tr.innerHTML=`<td>${l.date}</td><td>${money(l.amount)}</td><td>${l.interest}%</td><td>${l.months}</td><td>${money(l.balance)}</td>`;
+        tbodyLoans.appendChild(tr);
+      });
+      // repayments
+      const tbodyRepay=document.getElementById('memberRepayTable');
+      tbodyRepay.innerHTML='';
+      repayments.filter(r=>r.staffID===staffID).forEach(r=>{
+        const tr=document.createElement('tr');
+        tr.innerHTML=`<td>${r.paymentDate}</td><td>${money(r.amount)}</td><td>${r.method}</td>`;
+        tbodyRepay.appendChild(tr);
+      });
+    }
+
+    function generateMemberStatement(staffID) {
+      const m=members.find(m=>m.staff===staffID);
+      if(!m) return;
+      const totalSavings=savings.filter(s=>s.staffID===staffID).reduce((a,s)=>a+Number(s.amount||0),0);
+      const totalLoans=loans.filter(l=>l.staffID===staffID).reduce((a,l)=>a+Number(l.amount||0),0);
+      const loanBalance=loans.filter(l=>l.staffID===staffID).reduce((a,l)=>a+Number(l.balance||0),0);
+      const totalRepaid= repayments.filter(r=>r.staffID===staffID).reduce((a,r)=>a+Number(r.amount||0),0);
+      const dividend=Number(dividendsData.find(d=>d.staff===staffID)?.dividend||0);
+      document.getElementById('memberStatement').innerHTML=`
+        <table style="width:100%; border-collapse:collapse;">
+          <tr><th style="border:1px solid #ccc; padding:8px;">Item</th><th style="border:1px solid #ccc; padding:8px;">Amount</th></tr>
+          <tr><td style="border:1px solid #ccc; padding:8px;">Total Savings</td><td style="border:1px solid #ccc; padding:8px;">${money(totalSavings)}</td></tr>
+          <tr><td style="border:1px solid #ccc; padding:8px;">Total Loans</td><td style="border:1px solid #ccc; padding:8px;">${money(totalLoans)}</td></tr>
+          <tr><td style="border:1px solid #ccc; padding:8px;">Total Repaid</td><td style="border:1px solid #ccc; padding:8px;">${money(totalRepaid)}</td></tr>
+          <tr><td style="border:1px solid #ccc; padding:8px;">Loan Balance</td><td style="border:1px solid #ccc; padding:8px;">${money(loanBalance)}</td></tr>
+          <tr><td style="border:1px solid #ccc; padding:8px;">Dividend Earned</td><td style="border:1px solid #ccc; padding:8px;">${money(dividend)}</td></tr>
+        </table>`;
+    }
+
+    // Generate reports
+    function generateMemberSummary() {
+      if(!isAdmin()){ alert('Access Denied'); return; }
+      const data=[['Name','Staff ID','Department','Status','Savings']];
+      members.forEach(m=>{
+        const savingsAmt=savings.filter(s=>s.staffID===m.staff).reduce((a,s)=>a+Number(s.amount||0),0);
+        data.push([m.name,m.staff,m.dept,m.status,money(savingsAmt)]);
+      });
+      renderReport(data,'Member Summary');
+    }
+
+    function generateSavingsReport() {
+      if(!isAdmin()){ alert('Access Denied'); return; }
+      const data=[['Member','Staff ID','Amount','Source','Status','Date']];
+      savings.forEach(s=>data.push([s.memberName||'', s.staffID, money(s.amount), s.source||'', s.status||'', s.date||'']));
+      renderReport(data,'Savings Report');
+    }
+
+    function generateDividendsReport() {
+      if(!isAdmin()){ alert('Access Denied'); return; }
+      const data=[['Member','Staff ID','Savings','Dividend']];
+      members.forEach(m => {
+        const savingsAmt=savings.filter(s=>s.staffID===m.staff).reduce((a,s)=>a+Number(s.amount||0),0);
+        const div=dividendsData.find(d=>d.staff===m.staff);
+        data.push([m.name,m.staff,money(savingsAmt),money(div?div.dividend:0)]);
+      });
+      renderReport(data,'Dividends Report');
+    }
+
+    function autoGenerateFinancials() {
+      const t=getTotals();
+      financials.incomeStatement=[
+        ['Item','Amount'],
+        ['Loan Interest Revenue', loans.reduce((a,l)=>a+((Number(l.amount||0)*Number(l.interest||0))/100),0)],
+        ['Other Revenue',0],
+        ['Total Revenue', loans.reduce((a,l)=>a+((Number(l.amount||0)*Number(l.interest||0))/100),0)],
+        ['Operating Expenses',0],
+        ['Total Expenses',0],
+        ['Net Income', loans.reduce((a,l)=>a+((Number(l.amount||0)*Number(l.interest||0))/100),0)]
+      ];
+      financials.balanceSheet=[
+        ['Item','Amount'],
+        ['Cash / Savings', t.totalSavingsAmt + t.totalRepaid],
+        ['Loans Outstanding', t.totalLoanBalance],
+        ['Total Assets', t.totalSavingsAmt + t.totalRepaid + t.totalLoanBalance],
+        ['Member Deposits', t.totalSavingsAmt],
+        ['Dividends Payable', t.totalDividends],
+        ['Total Liabilities', t.totalSavingsAmt + t.totalDividends],
+        ['Owner Equity', Math.max( (t.totalSavingsAmt + t.totalRepaid + t.totalLoanBalance) - (t.totalSavingsAmt + t.totalDividends),0)]
+      ];
+      financials.cashFlow=[
+        ['Item','Amount'],
+        ['Savings Inflows', t.totalSavingsAmt],
+        ['Loan Repaid', t.totalRepaid],
+        ['Loans Disbursed', -t.totalLoansAmt],
+        ['Dividends Paid/Allocated', -t.totalDividends],
+        ['Net Change', t.totalSavingsAmt + t.totalRepaid - t.totalLoansAmt - t.totalDividends]
+      ];
+      save();
+    }
+
+    function generateIncomeStatement() {
+      if(!isAdmin()){ alert('Access Denied'); return; }
+      autoGenerateFinancials();
+      renderReport(financials.incomeStatement,'Income Statement');
+    }
+
+    function generateBalanceSheet() {
+      if(!isAdmin()){ alert('Access Denied'); return; }
+      autoGenerateFinancials();
+      renderReport(financials.balanceSheet,'Balance Sheet');
+    }
+
+    function generateCashFlow() {
+      if(!isAdmin()){ alert('Access Denied'); return; }
+      autoGenerateFinancials();
+      renderReport(financials.cashFlow,'Cash Flow');
+    }
+
+    function renderReport(data,title) {
+      let html=`<h3 style="margin-bottom:15px;">${title}</h3><table style="width:100%; border-collapse:collapse;">`;
+      data.forEach((row,i)=>{
+        html+=`<tr>`;
+        row.forEach(c=>{ html+=i===0?`<th style="border:1px solid #ccc; padding:8px;">${c}</th>`:`<td style="border:1px solid #ccc; padding:8px;">${c}</td>`; });
+        html+=`</tr>`;
+      });
+      html+=`</table>`;
+      document.getElementById('reportOutput').innerHTML=html;
+    }
+
+    function exportCurrentReport() {
+      const table = document.querySelector('#reportOutput table');
+      if(!table) return alert('Generate a report first');
+      const wb=XLSX.utils.table_to_book(table);
+      XLSX.writeFile(wb,'SACCO_Report.xlsx');
+    }
+
+    // Notifications for overdue/ pending
+    function checkLoanAndSavingsDue() {
+      const div=document.getElementById('notifications');
+      div.innerHTML='';
+      let has=false;
+      const today=new Date();
+      loans.forEach(loan=>{
+        const loanDate=new Date(loan.date);
+        const monthsElapsed=(today.getFullYear()-loanDate.getFullYear())*12+(today.getMonth()-loanDate.getMonth());
+        if(loan.status!=='Approved') return;
+        if(monthsElapsed>=loan.months && Number(loan.balance||0)>0){
+          has=true;
+          div.innerHTML+=`<div style="margin-bottom:8px;">🚨 Loan overdue for ${loan.memberName} (${loan.staffID}), balance: ${money(loan.balance)}</div>`;
+        } else if(monthsElapsed>=loan.months-1 && Number(loan.balance||0)>0){
+          has=true;
+          div.innerHTML+=`<div style="margin-bottom:8px;">⚠️ Loan nearing due for ${loan.memberName} (${loan.staffID}), balance: ${money(loan.balance)}</div>`;
+        }
+      });
+      savings.forEach(s=>{
+        if(s.status==='Pending'){
+          has=true;
+          div.innerHTML+=`<div style="margin-bottom:8px;">⏳ Saving by ${s.staffID} on ${s.date} pending confirmation</div>`;
+        }
+      });
+      div.style.display=has?'block':'none';
+    }
+
+    // Show audit logs
+    function renderAudit() {
+      const tbody=document.getElementById('auditTable');
+      tbody.innerHTML='';
+      [...audit].reverse().forEach(a=>{
+        const tr=document.createElement('tr');
+        tr.innerHTML=`<td>${a.time}</td><td>${a.user}</td><td>${a.action}</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function downloadStatement() {
+      let table=null;
+      if(currentRole==='member'){ generateMemberStatement(currentUser); table=document.querySelector('#memberStatement table'); }
+      else { table=document.querySelector('#reportOutput table')||document.querySelector('#memberStatement table'); }
+      if(!table) return alert('No statement/report');
+      const wb=XLSX.utils.table_to_book(table);
+      XLSX.writeFile(wb,'My_SACCO_Statement.xlsx');
+    }
+
+    function generateMemberCard(staffID) {
+      const m=members.find(m=>m.staff===staffID);
+      if(!m) return;
+      const html=`
+        <div style="width:350px;border:2px solid #003366;padding:15px;font-family:Poppins,sans-serif;">
+          <h3>OPM ARUA SACCO</h3>
+          <img src="${m.photo||''}" style="width:80px;height:80px;object-fit:cover;border-radius:8px;background:#eee;">
+          <p><b>Name:</b> ${m.name}</p>
+          <p><b>Member ID:</b> ${m.staff}</p>
+          <p><b>Department:</b> ${m.dept}</p>
+          <p><b>Status:</b> ${m.status}</p>
+        </div>`;
+      const w=window.open('','_blank');
+      w.document.write(html);
+      w.document.close();
+      w.print();
+    }
+
+    // Toggle dark mode
+    function toggleDark() { document.body.classList.toggle('darkMode'); }
+
+    // Initialize
+    function updateUI() {
+      populateDeptFilter();
+      renderMembersTable();
+      renderSavings();
+      renderLoans();
+      renderRepayments();
+      renderDividends();
+      renderAudit();
+      updateSummary();
+      updateSavingsSummary();
+      updateDashboard();
+    }
+    // Backup/Restore
+    function backup() {
+      const data={ members, savings, loans, repayments, dividendsData, audit, financials };
+      const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(blob);
+      a.download='sacco_backup.json';
+      a.click();
+    }
+    function restore() {
+      const input=document.createElement('input');
+      input.type='file';
+      input.accept='.json,application/json';
+      input.onchange=()=>{
+        const file=input.files[0];
+        if(!file) return;
+        const reader=new FileReader();
+        reader.onload=()=>{
+          try {
+            const data=JSON.parse(reader.result);
+            members=data.members||[];
+            savings=data.savings||[];
+            loans=data.loans||[];
+            repayments=data.repayments||[];
+            dividendsData=data.dividendsData||[];
+            audit=data.audit||[];
+            financials=data.financials||{};
+            save();
+            updateUI();
+            alert('Backup restored');
+          } catch(e){ alert('Invalid backup file'); }
+        }
+        reader.readAsText(file);
+      }
+      input.click();
+    }
+
+    // Show section
+    function showSection(id) {
+      document.querySelectorAll('section').forEach(s=>s.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      if(id==='reports') updateDashboard();
+    }
+
+    // Populate department filter
+    function populateDeptFilter() {
+      const depts=[...new Set(members.map(m=>m.dept).filter(Boolean))];
+      const filter=document.getElementById('filterDept');
+      filter.innerHTML='<option value="">Filter by Department</option>';
+      depts.forEach(d=>{
+        const opt=document.createElement('option');
+        opt.value=d; opt.textContent=d;
+        filter.appendChild(opt);
+      });
+    }
+
+    // Search members
+    function searchMembers() {
+      const q=document.getElementById('searchMember').value.toLowerCase();
+      const filtered=members.filter(m=>
+        (m.name||'').toLowerCase().includes(q)||
+        (m.staff||'').toLowerCase().includes(q)||
+        (m.phone||'').toLowerCase().includes(q)
+      );
+      renderMembersTable(filtered);
+    }
+
+    function filterMembers() {
+      const dept=document.getElementById('filterDept').value;
+      if(!dept) return renderMembersTable();
+      renderMembersTable(members.filter(m=>m.dept===dept));
+    }
+
+    // Register member
+    document.getElementById('memberForm').onsubmit=function(e){
+      e.preventDefault();
+      const m={
+        name: document.getElementById('name').value.trim(),
+        staff: document.getElementById('staff').value.trim(),
+        gender: document.getElementById('gender').value,
+        nid: document.getElementById('nid').value.trim(),
+        dept: document.getElementById('dept').value.trim(),
+        phone: document.getElementById('phone').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        address: document.getElementById('address').value.trim(),
+        share: parseFloat(document.getElementById('share').value||0),
+        joinDate: document.getElementById('joinDate').value,
+        status: document.getElementById('status').value,
+        photo: document.getElementById('photoPreview').src||''
+      };
+      if(!m.staff || !m.name){ alert('Fill all required'); return; }
+      if(editMemberIndex===null && members.some(x=>x.staff===m.staff)){ alert('Staff exists'); return; }
+      if(editMemberIndex!==null){ members[editMemberIndex]=m; log(`Edited member: ${m.name}`); }
+      else { members.push(m); log(`Added member: ${m.name}`); }
+      save();
+      document.getElementById('memberForm').reset();
+      document.getElementById('photoPreview').style.display='none';
+      updateUI();
+    }
+
+    // Photo preview
+    document.getElementById('photo').addEventListener('change', ()=>{
+      const file= document.getElementById('photo').files[0];
+      if(!file) return;
+      const reader=new FileReader();
+      reader.onload=()=> {
+        document.getElementById('photoPreview').src=reader.result;
+        document.getElementById('photoPreview').style.display='block';
+      }
+      reader.readAsDataURL(file);
+    });
+
+    // Render members table
+    function renderMembersTable(filter=members){
+      const tbody=document.getElementById('memberTable');
+      tbody.innerHTML='';
+      filter.forEach((m,i)=>{
+        const idx=members.findIndex(x=>x.staff===m.staff);
+        const tr=document.createElement('tr');
+        tr.innerHTML=`
+          <td><img src="${m.photo||''}" style="width:50px;height:50px;object-fit:cover;border-radius:8px;background:#e5e7eb"></td>
+          <td>${m.name}</td>
+          <td>${m.staff}</td>
+          <td>${m.gender||'-'}</td>
+          <td>${m.dept||'-'}</td>
+          <td>${m.phone||'-'}</td>
+          <td>${money(m.share)}</td>
+          <td>${m.status||'-'}</td>
+          <td>
+            <div class="inline-actions">
+              <button class="btn btn-info" onclick="editMember(${idx})">Edit</button>
+              <button class="btn btn-danger" onclick="deleteMember(${idx})">Delete</button>
+              <button class="btn btn-primary" onclick="generateMemberCard('${m.staff}')">ID Card</button>
+            </div>
+          </td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function editMember(i){
+      const m=members[i];
+      if(!m) return;
+      document.getElementById('name').value=m.name;
+      document.getElementById('staff').value=m.staff;
+      document.getElementById('gender').value=m.gender||'';
+      document.getElementById('nid').value=m.nid||'';
+      document.getElementById('dept').value=m.dept||'';
+      document.getElementById('phone').value=m.phone||'';
+      document.getElementById('email').value=m.email||'';
+      document.getElementById('address').value=m.address||'';
+      document.getElementById('share').value=m.share||0;
+      document.getElementById('joinDate').value=m.joinDate||'';
+      document.getElementById('status').value=m.status||'Active';
+      if(m.photo){ document.getElementById('photoPreview').src=m.photo; document.getElementById('photoPreview').style.display='block'; }
+      else { document.getElementById('photoPreview').src=''; document.getElementById('photoPreview').style.display='none'; }
+      editMemberIndex=i;
+    }
+
+    function deleteMember(i){
+      if(!members[i]) return;
+      if(!confirm('Delete this member?')) return;
+      log(`Deleted member: ${members[i].name}`);
+      members.splice(i,1);
+      save();
+      updateUI();
+    }
+
+    // Search and filter
+    function searchMembers() {
+      const q=document.getElementById('searchMember').value.toLowerCase();
+      const filtered=members.filter(m=>
+        (m.name||'').toLowerCase().includes(q)||
+        (m.staff||'').toLowerCase().includes(q)||
+        (m.phone||'').toLowerCase().includes(q)
+      );
+      renderMembersTable(filtered);
+    }
+
+    function filterMembers() {
+      const dept=document.getElementById('filterDept').value;
+      if(!dept) return renderMembersTable();
+      renderMembersTable(members.filter(m=>m.dept===dept));
+    }
+
+    // Savings
+    let editSavingIdx=null;
+    document.getElementById('savingForm').onsubmit=function(e){
+      e.preventDefault();
+      const staffID=document.getElementById('sMember').value.trim();
+      const memberName=findMemberName(staffID);
+      if(!memberName){ alert('Member not found'); return; }
+      const s={
+        staffID,
+        memberName,
+        date: document.getElementById('sDate').value,
+        amount: parseFloat(document.getElementById('sAmount').value||0),
+        source: document.getElementById('sSource').value,
+        reference: document.getElementById('sReference').value.trim(),
+        notes: document.getElementById('sNotes').value.trim(),
+        status: document.getElementById('sStatus').value
+      };
+      if(editSavingIdx!==null){ savings[editSavingIdx]=s; log(`Edited saving for ${s.staffID}`); editSavingIdx=null; }
+      else { savings.push(s); log(`Added saving for ${s.staffID}`); }
+      save(); document.getElementById('savingForm').reset(); updateUI();
+    }
+
+    function renderSavings() {
+      const tbody=document.getElementById('savingTable'); tbody.innerHTML='';
+      savings.forEach((s,i)=>{
+        const tr=document.createElement('tr');
+        tr.innerHTML=`
+          <td>${s.memberName} (${s.staffID})</td>
+          <td>${s.date}</td>
+          <td>${money(s.amount)}</td>
+          <td>${s.source}</td>
+          <td>${s.reference||'-'}</td>
+          <td>${s.status}</td>
+          <td>${s.notes||'-'}</td>
+          <td>
+            <div class="inline-actions">
+              <button class="btn btn-info" onclick="editSaving(${i})">Edit</button>
+              <button class="btn btn-danger" onclick="deleteSaving(${i})">Delete</button>
+            </div>
+          </td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function editSaving(i){
+      const s=savings[i];
+      if(!s) return;
+      document.getElementById('sMember').value=s.staffID;
+      document.getElementById('sDate').value=s.date;
+      document.getElementById('sAmount').value=s.amount;
+      document.getElementById('sSource').value=s.source;
+      document.getElementById('sReference').value=s.reference||'';
+      document.getElementById('sNotes').value=s.notes||'';
+      document.getElementById('sStatus').value=s.status||'Pending';
+      editSavingIdx=i;
+    }
+
+    function deleteSaving(i){
+      if(!savings[i]) return;
+      if(!confirm('Delete this saving?')) return;
+      log(`Deleted saving for ${savings[i].staffID}`);
+      savings.splice(i,1);
+      save(); updateUI();
+    }
+
+    function updateSavingsSummary() {
+      const t=getTotals();
+      document.getElementById('totalSavings').textContent=money(t.totalSavingsAmt);
+      document.getElementById('confirmedSavings').textContent=money(t.confirmedSavingsAmt);
+    }
+
+    // Dividends
+    function calculateDividends() {
+      const profit=parseFloat(document.getElementById('profit').value||0);
+      if(profit<=0){ alert('Enter profit'); return;}
+      const totalSavings=savings.reduce((a,s)=>a+Number(s.amount||0),0);
+      if(totalSavings<=0){ alert('No savings'); return;}
+      dividendsData=members.map(m=>{
+        const memberSavings=savings.filter(s=>s.staffID===m.staff).reduce((a,s)=>a+Number(s.amount||0),0);
+        const dividend=(memberSavings/totalSavings)*profit;
+        return { staff: m.staff, name: m.name, savings: memberSavings, dividend };
+      });
+      log('Dividends calculated'); save(); renderDividends(); updateUI();
+    }
+
+    function renderDividends() {
+      const tbody=document.getElementById('dividendTable');
+      tbody.innerHTML='';
+      dividendsData.forEach(d=>{
+        const tr=document.createElement('tr');
+        tr.innerHTML=`<td>${d.staff}</td><td>${d.name}</td><td>${money(d.savings)}</td><td>${money(d.dividend)}</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Loan calculations
+    function calculateLoanEligibility(staffID) {
+      const memberSavings=savings.filter(s=>s.staffID===staffID).reduce((a,s)=>a+Number(s.amount||0),0);
+      return memberSavings*3;
+    }
+
+    // Apply for loan
+    document.getElementById('loanForm').onsubmit=function(e){
+      e.preventDefault();
+      const staffID=document.getElementById('loanMember').value.trim();
+      const amount=parseFloat(document.getElementById('loanAmount').value||0);
+      const interest=parseFloat(document.getElementById('interest').value||0);
+      const months=parseInt(document.getElementById('months').value||0);
+      const date=document.getElementById('loanDate').value;
+      const purpose=document.getElementById('loanPurpose').value.trim();
+      const reference=document.getElementById('loanRef').value.trim();
+      const status=document.getElementById('loanStatus').value;
+      const memberName=findMemberName(staffID);
+      if(!memberName){ alert('Member not found'); return; }
+      if(!staffID || amount<=0 || interest<0 || months<=0 || !date){ alert('Fill all fields'); return; }
+
+      const eligible=calculateLoanEligibility(staffID);
+      if(amount>eligible){ alert('Exceeds eligibility: '+money(eligible)); return; }
+
+      const totalInterest=(amount*(interest/100));
+      const totalRepayment=amount+totalInterest;
+      const loan={ staffID, memberName, date, amount, interest, months, purpose, reference, status, balance: totalRepayment, totalRepayment };
+      if(editLoanIdx===null){ loans.push(loan); log(`Added loan for ${memberName}`); }
+      else { loans[editLoanIdx]=loan; log(`Edited loan for ${memberName}`); editLoanIdx=null; }
+      save(); updateUI();
+    }
+
+    function renderLoans() {
+      const tbody=document.getElementById('loanTable'); tbody.innerHTML='';
+      loans.forEach((l,i)=>{
+        const tr=document.createElement('tr');
+        tr.innerHTML=`
+          <td>${l.memberName} (${l.staffID})</td>
+          <td>${money(l.amount)}</td>
+          <td>${l.interest}</td>
+          <td>${l.months}</td>
+          <td>${l.status}</td>
+          <td>${money(l.balance)}</td>
+          <td>
+            <div class="inline-actions">
+              <button class="btn btn-info" onclick="editLoan(${i})">Edit</button>
+              <button class="btn btn-danger" onclick="deleteLoan(${i})">Delete</button>
+              <button class="btn btn-primary" onclick="viewSchedule(${i})">Schedule</button>
+            </div>
+          </td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function editLoan(i){
+      const l=loans[i];
+      if(!l) return;
+      document.getElementById('loanMember').value=l.staffID;
+      document.getElementById('loanAmount').value=l.amount;
+      document.getElementById('interest').value=l.interest;
+      document.getElementById('months').value=l.months;
+      document.getElementById('loanDate').value=l.date;
+      document.getElementById('loanPurpose').value=l.purpose;
+      document.getElementById('loanRef').value=l.reference;
+      document.getElementById('loanStatus').value=l.status;
+      editLoanIdx=i;
+    }
+
+    function deleteLoan(i){
+      if(!loans[i]) return;
+      if(!confirm('Delete this loan?')) return;
+      log(`Deleted loan for ${loans[i].memberName}`);
+      loans.splice(i,1);
+      save(); updateUI();
+    }
+
+    function generateAmortization(loan) {
+      const schedule=[];
+      const monthlyInterest=(loan.amount*(loan.interest/100))/loan.months;
+      const monthlyPrincipal=loan.amount/loan.months;
+      let balance=loan.amount;
+      for(let m=1; m<=loan.months; m++){
+        const payment=monthlyPrincipal+monthlyInterest;
+        balance-=monthlyPrincipal;
+        schedule.push({ month:m, payment, principal:monthlyPrincipal, interest:monthlyInterest, balance:Math.max(balance,0) });
+      }
+      return schedule;
+    }
+
+    function viewSchedule(i) {
+      const loan=loans[i];
+      if(!loan) return;
+      const schedule=generateAmortization(loan);
+      let html=`<h3 style="margin-bottom:15px">Loan Schedule</h3><table style="width:100%; border-collapse:collapse;"><tr><th>Month</th><th>Payment</th><th>Principal</th><th>Interest</th><th>Balance</th></tr>`;
+      schedule.forEach(s=> {
+        html+=`<tr><td>${s.month}</td><td>${money(s.payment)}</td><td>${money(s.principal)}</td><td>${money(s.interest)}</td><td>${money(s.balance)}</td></tr>`;
+      });
+      html+='</table>';
+      document.getElementById('reportOutput').innerHTML=html;
+      showSection('reports');
+    }
+
+    // Repayments
+    let currentRepaymentIdx=null;
+    document.getElementById('repayForm').onsubmit=function(e){
+      e.preventDefault();
+      const staffID=document.getElementById('repayMember').value.trim();
+      const amount=parseFloat(document.getElementById('repayAmount').value||0);
+      const date=document.getElementById('paymentDate').value;
+      const method=document.getElementById('paymentMethod').value;
+      const memberName=findMemberName(staffID);
+      if(!memberName){ alert('Member not found'); return; }
+      if(!staffID || amount<=0 || !date || !method){ alert('Fill all'); return; }
+
+      let remaining=amount;
+      const memberLoans=loans.filter(l=>l.staffID===staffID && Number(l.balance||0)>0);
+      if(!memberLoans.length){ alert('No active loan'); return; }
+
+      memberLoans.forEach(l=>{
+        if(remaining<=0) return;
+        const pay=Math.min(Number(l.balance||0), remaining);
+        l.balance=Number(l.balance||0)-pay;
+        remaining-=pay;
+      });
+      repayments.push({ staffID, memberName, amount, paymentDate: date, method });
+      log(`Recorded repayment for ${memberName} (${staffID})`);
+      save(); document.getElementById('repayForm').reset(); renderRepayments();
+    }
+
+    function renderRepayments() {
+      const tbody=document.getElementById('repayTable'); tbody.innerHTML='';
+      repayments.forEach((r,i)=>{
+        const totalBalance=loans.filter(l=>l.staffID===r.staffID).reduce((a,l)=>a+Number(l.balance||0),0);
+        const tr=document.createElement('tr');
+        tr.innerHTML=`<td>${r.memberName} (${r.staffID})</td><td>${money(r.amount)}</td><td>${r.paymentDate}</td><td>${r.method}</td><td>${money(totalBalance)}</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Helper functions
+    function findMemberName(staffID) {
+      const m=members.find(m=>m.staff===staffID);
+      return m?m.name:'';
+    }
+
+    // Show member data
+    function showMemberData(staffID) {
+      const m=members.find(m=>m.staff===staffID);
+      if(!m) return;
+      const memberSavings=savings.filter(s=>s.staffID===staffID).reduce((a,s)=>a+Number(s.amount||0),0);
+      const memberLoans=loans.filter(l=>l.staffID===staffID);
+      const totalLoan=memberLoans.reduce((a,l)=>a+Number(l.amount||0),0);
+      const totalBalance=memberLoans.reduce((a,l)=>a+Number(l.balance||0),0);
+      const div=dividendsData.find(d=>d.staff===staffID);
+      const dividendAmt=div?div.dividend:0;
+      document.getElementById('mSavings').textContent=money(memberSavings);
+      document.getElementById('mLoan').textContent=money(totalLoan);
+      document.getElementById('mBalance').textContent=money(totalBalance);
+      document.getElementById('mDividend').textContent=money(dividendAmt);
+      // populate savings table
+      const tbodySavings=document.getElementById('memberSavingsTable');
+      tbodySavings.innerHTML='';
+      savings.filter(s=>s.staffID===staffID).forEach(s=>{
+        const tr=document.createElement('tr');
+        tr.innerHTML=`<td>${s.date}</td><td>${money(s.amount)}</td><td>${s.source}</td><td>${s.status}</td>`;
+        tbodySavings.appendChild(tr);
+      });
+      // loans
+      const tbodyLoans=document.getElementById('memberLoanTable');
+      tbodyLoans.innerHTML='';
+      memberLoans.forEach(l=>{
+        const tr=document.createElement('tr');
+        tr.innerHTML=`<td>${l.date}</td><td>${money(l.amount)}</td><td>${l.interest}%</td><td>${l.months}</td><td>${money(l.balance)}</td>`;
+        tbodyLoans.appendChild(tr);
+      });
+      // repayments
+      const tbodyRepay=document.getElementById('memberRepayTable');
+      tbodyRepay.innerHTML='';
+      repayments.filter(r=>r.staffID===staffID).forEach(r=>{
+        const tr=document.createElement('tr');
+        tr.innerHTML=`<td>${r.paymentDate}</td><td>${money(r.amount)}</td><td>${r.method}</td>`;
+        tbodyRepay.appendChild(tr);
+      });
+    }
+
+    function generateMemberStatement(staffID) {
+      const m=members.find(m=>m.staff===staffID);
+      if(!m) return;
+      const totalSavings=savings.filter(s=>s.staffID===staffID).reduce((a,s)=>a+Number(s.amount||0),0);
+      const totalLoans=loans.filter(l=>l.staffID===staffID).reduce((a,l)=>a+Number(l.amount||0),0);
+      const loanBalance=loans.filter(l=>l.staffID===staffID).reduce((a,l)=>a+Number(l.balance||0),0);
+      const totalRepaid= repayments.filter(r=>r.staffID===staffID).reduce((a,r)=>a+Number(r.amount||0),0);
+      const dividend=Number(dividendsData.find(d=>d.staff===staffID)?.dividend||0);
+      document.getElementById('memberStatement').innerHTML=`
+        <table style="width:100%; border-collapse:collapse;">
+          <tr><th style="border:1px solid #ccc; padding:8px;">Item</th><th style="border:1px solid #ccc; padding:8px;">Amount</th></tr>
+          <tr><td style="border:1px solid #ccc; padding:8px;">Total Savings</td><td style="border:1px solid #ccc; padding:8px;">${money(totalSavings)}</td></tr>
+          <tr><td style="border:1px solid #ccc; padding:8px;">Total Loans</td><td style="border:1px solid #ccc; padding:8px;">${money(totalLoans)}</td></tr>
+          <tr><td style="border:1px solid #ccc; padding:8px;">Total Repaid</td><td style="border:1px solid #ccc; padding:8px;">${money(totalRepaid)}</td></tr>
+          <tr><td style="border:1px solid #ccc; padding:8px;">Loan Balance</td><td style="border:1px solid #ccc; padding:8px;">${money(loanBalance)}</td></tr>
+          <tr><td style="border:1px solid #ccc; padding:8px;">Dividend Earned</td><td style="border:1px solid #ccc; padding:8px;">${money(dividend)}</td></tr>
+        </table>`;
+    }
+
+    // Generate reports
+    function generateMemberSummary() {
+      if(!isAdmin()){ alert('Access Denied'); return; }
+      const data=[['Name','Staff ID','Department','Status','Savings']];
+      members.forEach(m=>{
+        const savingsAmt=savings.filter(s=>s.staffID===m.staff).reduce((a,s)=>a+Number(s.amount||0),0);
+        data.push([m.name,m.staff,m.dept,m.status,money(savingsAmt)]);
+      });
+      renderReport(data,'Member Summary');
+    }
+
+    function generateSavingsReport() {
+      if(!isAdmin()){ alert('Access Denied'); return; }
+      const data=[['Member','Staff ID','Amount','Source','Status','Date']];
+      savings.forEach(s=>data.push([s.memberName||'', s.staffID, money(s.amount), s.source||'', s.status||'', s.date||'']));
+      renderReport(data,'Savings Report');
+    }
+
+    function generateDividendsReport() {
+      if(!isAdmin()){ alert('Access Denied'); return; }
+      const data=[['Member','Staff ID','Savings','Dividend']];
+      members.forEach(m => {
+        const savingsAmt=savings.filter(s=>s.staffID===m.staff).reduce((a,s)=>a+Number(s.amount||0),0);
+        const div=dividendsData.find(d=>d.staff===m.staff);
+        data.push([m.name,m.staff,money(savingsAmt),money(div?div.dividend:0)]);
+      });
+      renderReport(data,'Dividends Report');
+    }
+
+    function autoGenerateFinancials() {
+      const t=getTotals();
+      financials.incomeStatement=[
+        ['Item','Amount'],
+        ['Loan Interest Revenue', loans.reduce((a,l)=>a+((Number(l.amount||0)*Number(l.interest||0))/100),0)],
+        ['Other Revenue',0],
+        ['Total Revenue', loans.reduce((a,l)=>a+((Number(l.amount||0)*Number(l.interest||0))/100),0)],
+        ['Operating Expenses',0],
+        ['Total Expenses',0],
+        ['Net Income', loans.reduce((a,l)=>a+((Number(l.amount||0)*Number(l.interest||0))/100),0)]
+      ];
+      financials.balanceSheet=[
+        ['Item','Amount'],
+        ['Cash / Savings', t.totalSavingsAmt + t.totalRepaid],
+        ['Loans Outstanding', t.totalLoanBalance],
+        ['Total Assets', t.totalSavingsAmt + t.totalRepaid + t.totalLoanBalance],
+        ['Member Deposits', t.totalSavingsAmt],
+        ['Dividends Payable', t.totalDividends],
+        ['Total Liabilities', t.totalSavingsAmt + t.totalDividends],
+        ['Owner Equity', Math.max( (t.totalSavingsAmt + t.totalRepaid + t.totalLoanBalance) - (t.totalSavingsAmt + t.totalDividends),0)]
+      ];
+      financials.cashFlow=[
+        ['Item','Amount'],
+        ['Savings Inflows', t.totalSavingsAmt],
+        ['Loan Repaid', t.totalRepaid],
+        ['Loans Disbursed', -t.totalLoansAmt],
+        ['Dividends Paid/Allocated', -t.totalDividends],
+        ['Net Change', t.totalSavingsAmt + t.totalRepaid - t.totalLoansAmt - t.totalDividends]
+      ];
+      save();
+    }
+
+    function generateIncomeStatement() {
+      if(!isAdmin()){ alert('Access Denied'); return; }
+      autoGenerateFinancials();
+      renderReport(financials.incomeStatement,'Income Statement');
+    }
+
+    function generateBalanceSheet() {
+      if(!isAdmin()){ alert('Access Denied'); return; }
+      autoGenerateFinancials();
+      renderReport(financials.balanceSheet,'Balance Sheet');
+    }
+
+    function generateCashFlow() {
+      if(!isAdmin()){ alert('Access Denied'); return; }
+      autoGenerateFinancials();
+      renderReport(financials.cashFlow,'Cash Flow');
+    }
+
+    function renderReport(data,title) {
+      let html=`<h3 style="margin-bottom:15px;">${title}</h3><table style="width:100%; border-collapse:collapse;">`;
+      data.forEach((row,i)=>{
+        html+=`<tr>`;
+        row.forEach(c=>{ html+=i===0?`<th style="border:1px solid #ccc; padding:8px;">${c}</th>`:`<td style="border:1px solid #ccc; padding:8px;">${c}</td>`; });
+        html+=`</tr>`;
+      });
+      html+=`</table>`;
+      document.getElementById('reportOutput').innerHTML=html;
+    }
+
+    function exportCurrentReport() {
+      const table = document.querySelector('#reportOutput table');
+      if(!table) return alert('Generate a report first');
+      const wb=XLSX.utils.table_to_book(table);
+      XLSX.writeFile(wb,'SACCO_Report.xlsx');
+    }
+
+    // Notifications
+    function checkLoanAndSavingsDue() {
+      const div=document.getElementById('notifications');
+      div.innerHTML='';
+      let has=false;
+      const today=new Date();
+      loans.forEach(loan=>{
+        const loanDate=new Date(loan.date);
+        const monthsElapsed=(today.getFullYear()-loanDate.getFullYear())*12+(today.getMonth()-loanDate.getMonth());
+        if(loan.status!=='Approved') return;
+        if(monthsElapsed>=loan.months && Number(loan.balance||0)>0){
+          has=true;
+          div.innerHTML+=`<div style="margin-bottom:8px;">🚨 Loan overdue for ${loan.memberName} (${loan.staffID}), balance: ${money(loan.balance)}</div>`;
+        } else if(monthsElapsed>=loan.months-1 && Number(loan.balance||0)>0){
+          has=true;
+          div.innerHTML+=`<div style="margin-bottom:8px;">⚠️ Loan nearing due for ${loan.memberName} (${loan.staffID}), balance: ${money(loan.balance)}</div>`;
+        }
+      });
+      savings.forEach(s=>{
+        if(s.status==='Pending'){
+          has=true;
+          div.innerHTML+=`<div style="margin-bottom:8px;">⏳ Saving by ${s.staffID} on ${s.date} pending confirmation</div>`;
+        }
+      });
+      div.style.display=has?'block':'none';
+    }
+
+    // Show audit logs
+    function renderAudit() {
+      const tbody=document.getElementById('auditTable');
+      tbody.innerHTML='';
+      [...audit].reverse().forEach(a=>{
+        const tr=document.createElement('tr');
+        tr.innerHTML=`<td>${a.time}</td><td>${a.user}</td><td>${a.action}</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Download statement
+    function downloadStatement() {
+      let table=null;
+      if(currentRole==='member'){ generateMemberStatement(currentUser); table=document.querySelector('#memberStatement table'); }
+      else { table=document.querySelector('#reportOutput table')||document.querySelector('#memberStatement table'); }
+      if(!table) return alert('No statement available');
+      const wb=XLSX.utils.table_to_book(table);
+      XLSX.writeFile(wb,'My_SACCO_Statement.xlsx');
+    }
+
+    // Member ID card
+    function generateMemberCard(staffID) {
+      const m=members.find(m=>m.staff===staffID);
+      if(!m) return;
+      const html=`
+        <div style="width:350px;border:2px solid #003366;padding:15px;font-family:Poppins,sans-serif;">
+          <h3>OPM ARUA SACCO</h3>
+          <img src="${m.photo||''}" style="width:80px;height:80px;object-fit:cover;border-radius:8px;background:#eee;">
+          <p><b>Name:</b> ${m.name}</p>
+          <p><b>Member ID:</b> ${m.staff}</p>
+          <p><b>Department:</b> ${m.dept}</p>
+          <p><b>Status:</b> ${m.status}</p>
+        </div>`;
+      const w=window.open('','_blank');
+      w.document.write(html);
+      w.document.close();
+      w.print();
+    }
+
+    // Toggle dark mode
+    function toggleDark() { document.body.classList.toggle('darkMode'); }
+
+    // Initialize
+    function updateUI() {
+      populateDeptFilter();
+      renderMembersTable();
+      renderSavings();
+      renderLoans();
+      renderRepayments();
+      renderDividends();
+      renderAudit();
+      updateSummary();
+      updateSavingsSummary();
+    }
+
+    // Backup/Restore
+    function backup() {
+      const data={ members, savings, loans, repayments, dividendsData, audit, financials };
+      const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(blob);
+      a.download='sacco_backup.json';
+      a.click();
+    }
+    function restore() {
+      const input=document.createElement('input');
+      input.type='file';
+      input.accept='.json,application/json';
+      input.onchange=()=>{
+        const file=input.files[0];
+        if(!file) return;
+        const reader=new FileReader();
+        reader.onload=()=>{
+          try {
+            const data=JSON.parse(reader.result);
+            members=data.members||[];
+            savings=data.savings||[];
+            loans=data.loans||[];
+            repayments=data.repayments||[];
+            dividendsData=data.dividendsData||[];
+            audit=data.audit||[];
+            financials=data.financials||{};
+            save(); updateUI(); alert('Backup restored');
+          } catch(e){ alert('Invalid backup file'); }
+        }
+        reader.readAsText(file);
+      }
+      input.click();
+    }
+
+    // Show section
+    function showSection(id) {
+      document.querySelectorAll('section').forEach(s=>s.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      if(id==='reports') updateDashboard();
+    }
+
+    // Populate department filter
+    function populateDeptFilter() {
+      const depts=[...new Set(members.map(m=>m.dept).filter(Boolean))];
+      const filter=document.getElementById('filterDept');
+      filter.innerHTML='<option value="">Filter by Department</option>';
+      depts.forEach(d=>{
+        const opt=document.createElement('option');
+        opt.value=d; opt.textContent=d;
+        filter.appendChild(opt);
+      });
+    }
+
+    // Search members
+    function searchMembers() {
+      const q=document.getElementById('searchMember').value.toLowerCase();
+      const filtered=members.filter(m=>
+        (m.name||'').toLowerCase().includes(q)||
+        (m.staff||'').toLowerCase().includes(q)||
+        (m.phone||'').toLowerCase().includes(q)
+      );
+      renderMembersTable(filtered);
+    }
+
+    function filterMembers() {
+      const dept=document.getElementById('filterDept').value;
+      if(!dept) return renderMembersTable();
+      renderMembersTable(members.filter(m=>m.dept===dept));
+    }
+
+    // Register member
+    let editMemberIdx=null;
+    document.getElementById('memberForm').onsubmit=function(e){
+      e.preventDefault();
+      const m={
+        name: document.getElementById('name').value.trim(),
+        staff: document.getElementById('staff').value.trim(),
+        gender: document.getElementById('gender').value,
+        nid: document.getElementById('nid').value.trim(),
+        dept: document.getElementById('dept').value.trim(),
+        phone: document.getElementById('phone').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        address: document.getElementById('address').value.trim(),
+        share: parseFloat(document.getElementById('share').value||0),
+        joinDate: document.getElementById('joinDate').value,
+        status: document.getElementById('status').value,
+        photo: document.getElementById('photoPreview').src||''
+      };
+      if(!m.staff || !m.name){ alert('Fill all required'); return; }
+      if(editMemberIdx===null && members.some(x=>x.staff===m.staff)){ alert('Staff exists'); return; }
+      if(editMemberIdx!==null){ members[editMemberIdx]=m; log(`Edited member: ${m.name}`); }
+      else { members.push(m); log(`Added member: ${m.name}`); }
+      save(); document.getElementById('memberForm').reset(); document.getElementById('photoPreview').style.display='none'; updateUI();
+    }
+
+    // Photo preview
+    document.getElementById('photo').addEventListener('change', ()=>{
+      const file=document.getElementById('photo').files[0];
+      if(!file) return;
+      const reader=new FileReader();
+      reader.onload=()=>{
+        document.getElementById('photoPreview').src=reader.result;
+        document.getElementById('photoPreview').style.display='block';
+      }
+      reader.readAsDataURL(file);
+    });
+
+    // Render members table
+    function renderMembersTable(filter=members){
+      const tbody=document.getElementById('memberTable');
+      tbody.innerHTML='';
+      filter.forEach((m,i)=>{
+        const idx=members.findIndex(x=>x.staff===m.staff);
+        const tr=document.createElement('tr');
+        tr.innerHTML=`
+          <td><img src="${m.photo||''}" style="width:50px;height:50px;object-fit:cover;border-radius:8px;background:#e5e7eb"></td>
+          <td>${m.name}</td>
+          <td>${m.staff}</td>
+          <td>${m.gender||'-'}</td>
+          <td>${m.dept||'-'}</td>
+          <td>${m.phone||'-'}</td>
+          <td>${money(m.share)}</td>
+          <td>${m.status||'-'}</td>
+          <td>
+            <div class="inline-actions">
+              <button class="btn btn-info" onclick="editMember(${idx})">Edit</button>
+              <button class="btn btn-danger" onclick="deleteMember(${idx})">Delete</button>
+              <button class="btn btn-primary" onclick="generateMemberCard('${m.staff}')">ID Card</button>
+            </div>
+          </td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function editMember(i){
+      const m=members[i];
+      if(!m) return;
+      document.getElementById('name').value=m.name;
+      document.getElementById('staff').value=m.staff;
+      document.getElementById('gender').value=m.gender||'';
+      document.getElementById('nid').value=m.nid||'';
+      document.getElementById('dept').value=m.dept||'';
+      document.getElementById('phone').value=m.phone||'';
+      document.getElementById('email').value=m.email||'';
+      document.getElementById('address').value=m.address||'';
+      document.getElementById('share').value=m.share||0;
+      document.getElementById('joinDate').value=m.joinDate||'';
+      document.getElementById('status').value=m.status||'Active';
+      if(m.photo){ document.getElementById('photoPreview').src=m.photo; document.getElementById('photoPreview').style.display='block'; }
+      else { document.getElementById('photoPreview').src=''; document.getElementById('photoPreview').style.display='none'; }
+      editMemberIdx=i;
+    }
+
+    function deleteMember(i){
+      if(!members[i]) return;
+      if(!confirm('Delete this member?')) return;
+      log(`Deleted member: ${members[i].name}`);
+      members.splice(i,1);
+      save();
+      updateUI();
+    }
+
+    // Search and filter
+    function searchMembers() {
+      const q=document.getElementById('searchMember').value.toLowerCase();
+      const filtered=members.filter(m=>
+        (m.name||'').toLowerCase().includes(q)||
+        (m.staff||'').toLowerCase().includes(q)||
+        (m.phone||'').toLowerCase().includes(q)
+      );
+      renderMembersTable(filtered);
+    }
+
+    function filterMembers() {
+      const dept=document.getElementById('filterDept').value;
+      if(!dept) return renderMembersTable();
+      renderMembersTable(members.filter(m=>m.dept===dept));
+    }
+
+    // Savings
+    document.getElementById('savingForm').onsubmit=function(e){
+      e.preventDefault();
+      const staffID=document.getElementById('sMember').value.trim();
+      const memberName=findMemberName(staffID);
+      if(!memberName){ alert('Member not found'); return; }
+      const s={
+        staffID,
+        memberName,
+        date: document.getElementById('sDate').value,
+        amount: parseFloat(document.getElementById('sAmount').value||0),
+        source: document.getElementById('sSource').value,
+        reference: document.getElementById('sReference').value.trim(),
+        notes: document.getElementById('sNotes').value.trim(),
+        status: document.getElementById('sStatus').value
+      };
+      if(editSavingIdx!==null){ savings[editSavingIdx]=s; log(`Edited saving for ${s.staffID}`); editSavingIdx=null; }
+      else { savings.push(s); log(`Added saving for ${s.staffID}`); }
+      save(); document.getElementById('savingForm').reset(); updateUI();
+    }
+
+    function renderSavings() {
+      const tbody=document.getElementById('savingTable'); tbody.innerHTML='';
+      savings.forEach((s,i)=>{
+        const tr=document.createElement('tr');
+        tr.innerHTML=`
+          <td>${s.memberName} (${s.staffID})</td>
+          <td>${s.date}</td>
+          <td>${money(s.amount)}</td>
+          <td>${s.source}</td>
+          <td>${s.reference||'-'}</td>
+          <td>${s.status}</td>
+          <td>${s.notes||'-'}</td>
+          <td>
+            <div class="inline-actions">
+              <button class="btn btn-info" onclick="editSaving(${i})">Edit</button>
+              <button class="btn btn-danger" onclick="deleteSaving(${i})">Delete</button>
+            </div>
+          </td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function editSaving(i){
+      const s=savings[i];
+      if(!s) return;
+      document.getElementById('sMember').value=s.staffID;
+      document.getElementById('sDate').value=s.date;
+      document.getElementById('sAmount').value=s.amount;
+      document.getElementById('sSource').value=s.source;
+      document.getElementById('sReference').value=s.reference||'';
+      document.getElementById('sNotes').value=s.notes||'';
+      document.getElementById('sStatus').value=s.status||'Pending';
+      editSavingIdx=i;
+    }
+
+    function deleteSaving(i){
+      if(!savings[i]) return;
+      if(!confirm('Delete this saving?')) return;
+      log(`Deleted saving for ${savings[i].staffID}`);
+      savings.splice(i,1);
+      save(); updateUI();
+    }
+
+    function updateSavingsSummary() {
+      const t=getTotals();
+      document.getElementById('totalSavings').textContent=money(t.totalSavingsAmt);
+      document.getElementById('confirmedSavings').textContent=money(t.confirmedSavingsAmt);
+    }
+
+    // Dividends
+    function calculateDividends() {
+      const profit=parseFloat(document.getElementById('profit').value||0);
+      if(profit<=0){ alert('Enter profit'); return;}
+      const totalSavings=savings.reduce((a,s)=>a+Number(s.amount||0),0);
+      if(totalSavings<=0){ alert('No savings'); return;}
+      dividendsData=members.map(m=>{
+        const memberSavings=savings.filter(s=>s.staffID===m.staff).reduce((a,s)=>a+Number(s.amount||0),0);
+        const dividend=(memberSavings/totalSavings)*profit;
+        return { staff: m.staff, name: m.name, savings: memberSavings, dividend };
+      });
+      log('Dividends calculated'); save(); renderDividends(); updateUI();
+    }
+
+    function renderDividends() {
+      const tbody=document.getElementById('dividendTable');
+      tbody.innerHTML='';
+      dividendsData.forEach(d=>{
+        const tr=document.createElement('tr');
+        tr.innerHTML=`<td>${d.staff}</td><td>${d.name}</td><td>${money(d.savings)}</td><td>${money(d.dividend)}</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function calculateLoanEligibility(staffID) {
+      const memberSavings=savings.filter(s=>s.staffID===staffID).reduce((a,s)=>a+Number(s.amount||0),0);
+      return memberSavings*3;
+    }
+
+    // Apply loan
+    document.getElementById('loanForm').onsubmit=function(e){
+      e.preventDefault();
+      const staffID=document.getElementById('loanMember').value.trim();
+      const amount=parseFloat(document.getElementById('loanAmount').value||0);
+      const interest=parseFloat(document.getElementById('interest').value||0);
+      const months=parseInt(document.getElementById('months').value||0);
+      const date=document.getElementById('loanDate').value;
+      const purpose=document.getElementById('loanPurpose').value.trim();
+      const reference=document.getElementById('loanRef').value.trim();
+      const status=document.getElementById('loanStatus').value;
+      const memberName=findMemberName(staffID);
+      if(!memberName){ alert('Member not found'); return; }
+      if(!staffID || amount<=0 || interest<0 || months<=0 || !date){ alert('Fill all'); return; }
+      const eligible=calculateLoanEligibility(staffID);
+      if(amount>eligible){ alert('Exceeds eligibility: '+money(eligible)); return; }
+      const totalInterest=(amount*(interest/100));
+      const totalRepayment=amount+totalInterest;
+      const loan={ staffID, memberName, date, amount, interest, months, purpose, reference, status, balance: totalRepayment, totalRepayment };
+      if(editLoanIdx===null){ loans.push(loan); log(`Added loan for ${memberName}`); }
+      else { loans[editLoanIdx]=loan; log(`Edited loan for ${memberName}`); editLoanIdx=null; }
+      save(); updateUI();
+    }
+
+    function renderLoans() {
+      const tbody=document.getElementById('loanTable'); tbody.innerHTML='';
+      loans.forEach((l,i)=>{
+        const tr=document.createElement('tr');
+        tr.innerHTML=`
+          <td>${l.memberName} (${l.staffID})</td>
+          <td>${money(l.amount)}</td>
+          <td>${l.interest}</td>
+          <td>${l.months}</td>
+          <td>${l.status}</td>
+          <td>${money(l.balance)}</td>
+          <td>
+            <div class="inline-actions">
+              <button class="btn btn-info" onclick="editLoan(${i})">Edit</button>
+              <button class="btn btn-danger" onclick="deleteLoan(${i})">Delete</button>
+              <button class="btn btn-primary" onclick="viewSchedule(${i})">Schedule</button>
+            </div>
+          </td>`;
+        document.getElementById('loanTable').appendChild(tr);
+      });
+    }
+
+    function editLoan(i){
+      const l=loans[i];
+      if(!l) return;
+      document.getElementById('loanMember').value=l.staffID;
+      document.getElementById('loanAmount').value=l.amount;
+      document.getElementById('interest').value=l.interest;
+      document.getElementById('months').value=l.months;
+      document.getElementById('loanDate').value=l.date;
+      document.getElementById('loanPurpose').value=l.purpose;
+      document.getElementById('loanRef').value=l.reference;
+      document.getElementById('loanStatus').value=l.status;
+      editLoanIdx=i;
+    }
+
+    function deleteLoan(i){
+      if(!loans[i]) return;
+      if(!confirm('Delete this loan?')) return;
+      log(`Deleted loan for ${loans[i].memberName}`);
+      loans.splice(i,1);
+      save(); updateUI();
+    }
+
+    function generateAmortization(loan) {
+      const schedule=[];
+      const monthlyInterest=(loan.amount*(loan.interest/100))/loan.months;
+      const monthlyPrincipal=loan.amount/loan.months;
+      let balance=loan.amount;
+      for(let m=1; m<=loan.months; m++){
+        const payment=monthlyPrincipal+monthlyInterest;
+        balance-=monthlyPrincipal;
+        schedule.push({ month:m, payment, principal:monthlyPrincipal, interest:monthlyInterest, balance:Math.max(balance,0) });
+      }
+      return schedule;
+    }
+
+    function viewSchedule(i) {
+      const loan=loans[i];
+      if(!loan) return;
+      const schedule=generateAmortization(loan);
+      let html=`<h3 style="margin-bottom:15px">Loan Schedule</h3><table style="width:100%; border-collapse:collapse;"><tr><th>Month</th><th>Payment</th><th>Principal</th><th>Interest</th><th>Balance</th></tr>`;
+      schedule.forEach(s=> {
+        html+=`<tr><td>${s.month}</td><td>${money(s.payment)}</td><td>${money(s.principal)}</td><td>${money(s.interest)}</td><td>${money(s.balance)}</td></tr>`;
+      });
+      html+='</table>';
+      document.getElementById('reportOutput').innerHTML=html;
+      showSection('reports');
+    }
+
+    // Repayments
+      document.getElementById('repayForm').onsubmit=function(e){
+      e.preventDefault();
+      const staffID=document.getElementById('repayMember').value.trim();
+      const amount=parseFloat(document.getElementById('repayAmount').value||0);
+      const date=document.getElementById('paymentDate').value;
+      const method=document.getElementById('paymentMethod').value;
+      const memberName=findMemberName(staffID);
+      if(!memberName){ alert('Member not found'); return; }
+      if(!staffID || amount<=0 || !date || !method){ alert('Fill all'); return; }
+
+      let remaining=amount;
+      const memberLoans=loans.filter(l=>l.staffID===staffID && Number(l.balance||0)>0);
+      if(!memberLoans.length){ alert('No active loan'); return; }
+
+      memberLoans.forEach(l=>{
+        if(remaining<=0) return;
+        const pay=Math.min(Number(l.balance||0), remaining);
+        l.balance=Number(l.balance||0)-pay;
+        remaining-=pay;
+      });
+      repayments.push({ staffID, memberName, amount, paymentDate: date, method });
+      log(`Recorded repayment for ${memberName} (${staffID})`);
+      save(); document.getElementById('repayForm').reset(); renderRepayments();
+    }
+
+    function renderRepayments() {
+      const tbody=document.getElementById('repayTable'); tbody.innerHTML='';
+      repayments.forEach((r,i)=>{
+        const totalBalance=loans.filter(l=>l.staffID===r.staffID).reduce((a,l)=>a+Number(l.balance||0),0);
+        const tr=document.createElement('tr');
+        tr.innerHTML=`<td>${r.memberName} (${r.staffID})</td><td>${money(r.amount)}</td><td>${r.paymentDate}</td><td>${r.method}</td><td>${money(totalBalance)}</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Helper and init
+    function findMemberName(staffID) {
+      const m=members.find(m=>m.staff===staffID);
+      return m?m.name:'';
+    }
+
+    function showMemberData(staffID) {
+      const m=members.find(m=>m.staff===staffID);
+      if(!m) return;
+      const memberSavings=savings.filter(s=>s.staffID===staffID).reduce((a,s)=>a+Number(s.amount||0),0);
+      const memberLoans=loans.filter(l=>l.staffID===staffID);
+      const totalLoan=memberLoans.reduce((a,l)=>a+Number(l.amount||0),0);
+      const totalBalance=memberLoans.reduce((a,l)=>a+Number(l.balance||0),0);
+      const div=dividendsData.find(d=>d.staff===staffID);
+      const dividendAmt=div?div.dividend:0;
+      document.getElementById('mSavings').textContent=money(memberSavings);
+      document.getElementById('mLoan').textContent=money(totalLoan);
+      document.getElementById('mBalance').textContent=money(totalBalance);
+      document.getElementById('mDividend').textContent=money(dividendAmt);
+      // populate tables...
+      // (Same as previous, omitted here for brevity)
+    }
+
+    function generateMemberStatement(staffID) {
+      const m=members.find(m=>m.staff===staffID);
+      if(!m) return;
+      const totalSavings=savings.filter(s=>s.staffID===staffID).reduce((a,s)=>a+Number(s.amount||0),0);
+      const totalLoans=loans.filter(l=>l.staffID===staffID).reduce((a,l)=>a+Number(l.amount||0),0);
+      const loanBalance=loans.filter(l=>l.staffID===staffID).reduce((a,l)=>a+Number(l.balance||0),0);
+      const totalRepaid= repayments.filter(r=>r.staffID===staffID).reduce((a,r)=>a+Number(r.amount||0),0);
+      const dividend=Number(dividendsData.find(d=>d.staff===staffID)?.dividend||0);
+      document.getElementById('memberStatement').innerHTML=`
+        <table style="width:100%; border-collapse:collapse;">
+          <tr><th style="border:1px solid #ccc; padding:8px;">Item</th><th style="border:1px solid #ccc; padding:8px;">Amount</th></tr>
+          <tr><td style="border:1px solid #ccc; padding:8px;">Total Savings</td><td style="border:1px solid #ccc; padding:8px;">${money(totalSavings)}</td></tr>
+          <tr><td style="border:1px solid #ccc; padding:8px;">Total Loans</td><td style="border:1px solid #ccc; padding:8px;">${money(totalLoans)}</td></tr>
+          <tr><td style="border:1px solid #ccc; padding:8px;">Total Repaid</td><td style="border:1px solid #ccc; padding:8px;">${money(totalRepaid)}</td></tr>
+          <tr><td style="border:1px solid #ccc; padding:8px;">Loan Balance</td><td style="border:1px solid #ccc; padding:8px;">${money(loanBalance)}</td></tr>
+          <tr><td style="border:1px solid #ccc; padding:8px;">Dividend Earned</td><td style="border:1px solid #ccc; padding:8px;">${money(dividend)}</td></tr>
+        </table>`;
+    }
+
+    // Generate report functions...
+    // (Same pattern as previous versions, omitted here for brevity)
+
+    // Initialize
+    updateUI();
+    setInterval(()=>{ localStorage.setItem('autoBackup', JSON.stringify({ members, savings, loans, repayments, dividendsData, audit, financials })); },60000);
+  </script>
+</body>
+</html>

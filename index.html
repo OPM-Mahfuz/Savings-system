@@ -1,0 +1,1921 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OPM ARUA SACCO PRO SYSTEM</title>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --primary: #003366;
+      --primary-2: #0055aa;
+      --accent: #0077cc;
+      --bg: #f4f6f9;
+      --surface: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #dbe2ea;
+      --success: #198754;
+      --warning: #f59e0b;
+      --danger: #dc3545;
+      --shadow: 0 10px 25px rgba(0,0,0,0.08);
+      --radius: 14px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: Poppins, sans-serif; }
+    body { background: var(--bg); color: var(--text); line-height: 1.45; font-size: 15px; }
+
+    /* Headings and buttons inherit font */
+    h2, h3 { color: var(--primary); }
+    button, input, select { font: inherit; }
+
+    /* Header styles - sticky on top for responsiveness */
+    header {
+      background: var(--primary);
+      color: white;
+      padding: 14px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 999;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+      flex-wrap: wrap; /* Wrap on small screens */
+    }
+
+    header h2 { font-size: 1.1rem; color: white; }
+
+    /* Action buttons in header */
+    .header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    /* Button styles with larger touch targets */
+    .header-actions button,
+    .sidebar button,
+    .btn {
+      border: none;
+      cursor: pointer;
+      border-radius: 10px;
+      padding: 12px 16px; /* Increased padding for touch friendliness */
+      font-size: 1rem; /* Larger font size for touch */
+      transition: 0.2s ease;
+    }
+
+    /* Hover effect for buttons */
+    .header-actions button:hover,
+    .sidebar button:hover,
+    .btn:hover { transform: translateY(-1px); }
+
+    /* Main container */
+    .container { display: flex; min-height: calc(100vh - 72px); flex-direction: row; }
+
+    /* Sidebar styles */
+    .sidebar {
+      width: 250px;
+      background: linear-gradient(180deg, var(--primary), #01264a);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    /* Sidebar buttons, make larger for touch */
+    .sidebar button {
+      background: rgba(255,255,255,0.09);
+      color: white;
+      text-align: left;
+      font-weight: 500;
+      padding: 14px; /* Larger padding for easier tapping */
+      font-size: 1rem;
+    }
+
+    /* Hover effect for sidebar buttons */
+    .sidebar button:hover { background: rgba(255,255,255,0.18); }
+
+    /* Main content area */
+    .main { flex: 1; padding: 20px; overflow-x: auto; }
+
+    /* Sections hidden by default, visible when active */
+    section { display: none; }
+    section.active { display: block; animation: fadeIn .25s ease; }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px);} to { opacity: 1; transform: translateY(0);} }
+
+    /* Responsive grid for cards and metrics */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 15px;
+      margin: 16px 0 20px;
+    }
+
+    /* Card styles with padding, border-radius, shadow */
+    .card, .panel {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+      border: 1px solid rgba(0,0,0,0.03);
+    }
+
+    /* Card headings and paragraphs */
+    .card h3 { font-size: 0.95rem; margin-bottom: 8px; color: var(--muted); }
+    .card p { font-size: 1.3rem; font-weight: 700; color: var(--primary); }
+
+    /* Grid for metrics */
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 15px;
+    }
+
+    /* Metrics card styles */
+    .metricCard {
+      background: linear-gradient(135deg, #f8fbff, #eef5ff);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    /* Bold text in metric card */
+    .metricCard b {
+      display: block;
+      margin-top: 8px;
+      color: var(--primary);
+      font-size: 1.05rem;
+    }
+
+    /* Forms styling, inputs take full width and large padding */
+    form {
+      background: var(--surface);
+      padding: 16px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin-top: 10px;
+    }
+
+    form input, form select {
+      width: 100%;
+      padding: 15px 16px; /* Larger padding for touch */
+      border: 1px solid var(--border);
+      border-radius: 10px; /* Slightly smaller radius for easier touch */
+      outline: none;
+      font-size: 1rem;
+      margin-bottom: 10px;
+    }
+
+    /* Focus styles for inputs for accessibility */
+    form input:focus, form select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px rgba(37,99,235,0.12);
+    }
+
+    /* Button styles with larger font and padding */
+    .submit, .btn-primary {
+      background: var(--primary);
+      color: white;
+      padding: 15px;
+      border: none;
+      border-radius: 14px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 14px 24px rgba(11,99,206,0.25);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      width: 100%; /* Full width for better touchability */
+    }
+
+    /* Hover effect for buttons */
+    .submit:hover,
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 18px 28px rgba(11,99,206,0.30);
+    }
+
+    /* Table container for horizontal scrolling if needed on small screens */
+    .table-container { overflow-x: auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--surface);
+      margin-top: 14px;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      font-size: 0.9rem; /* Slightly larger text for readability */
+    }
+
+    th, td { padding: 11px 10px; border-bottom: 1px solid #edf1f5; text-align: left; vertical-align: middle; }
+    th { background: var(--primary); color: white; font-weight: 600; }
+
+    /* Hover effect on table rows for better touch feedback */
+    tr:hover td { background: #fafcff; }
+
+    /* Inline actions buttons (edit/delete) */
+    .inline-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .inline-actions button { padding: 7px 10px; font-size: 0.88rem; }
+
+    /* Toolbar inputs and selects - make larger for easy touch */
+    .toolbar { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 14px; }
+    .toolbar input, .toolbar select { flex: 1; min-width: 180px; padding: 14px; font-size: 1rem; }
+
+    /* Notifications styling for alerts */
+    #notifications {
+      margin-bottom: 15px;
+      padding: 14px;
+      background: #fff8e1;
+      border: 1px solid #ffe08a;
+      border-radius: 12px;
+      display: none;
+    }
+
+    /* Buttons for reports and other actions, make large */
+    .report-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+      margin: 18px 0 24px;
+    }
+    .report-buttons button { min-width: 170px; padding: 14px; font-size: 1rem; }
+
+    /* Dark mode variables - no change here, just for reference */
+    .darkMode {
+      --bg: #111827;
+      --surface: #1f2937;
+      --text: #f3f4f6;
+      --muted: #cbd5e1;
+      --border: #334155;
+      --shadow: 0 10px 20px rgba(0,0,0,0.25);
+    }
+
+    /* Dark mode overrides for headings, tables, forms, etc. */
+    .darkMode h2, .darkMode h3, .darkMode .card p, .darkMode .metricCard b { color: #f8fafc; }
+    .darkMode table, .darkMode form, .darkMode .card, .darkMode .panel { background: var(--surface); }
+    .darkMode tr:hover td { background: rgba(255,255,255,0.03); }
+    .darkMode input, .darkMode select { background: #0f172a; color: white; border-color: #334155; }
+    .darkMode .metricCard { background: linear-gradient(135deg, #172033, #202b40); }
+
+    /* ===== MOBILE ===== */
+    @media(max-width:768px){
+      /* Make header more vertical for small screens */
+      .header-container {
+        flex-direction: column;
+        align-items: center;
+        padding: 8px;
+      }
+      
+      /* Adjust hero height if exists (you have only part of code shown) */
+      .hero { height: 75vh; }
+
+      /* Make header content text larger and centered */
+      .hero-content h1 { font-size: 28px; }
+      .hero-content p { font-size: 16px; }
+
+      /* Center nav items if any */
+      .header-container { flex-direction: column; text-align: center; }
+
+      /* Make navigation ul centered if used (not in your code) */
+      nav ul { justify-content: center; }
+
+      /* Sidebar will be hidden or collapsible on small screens, handled in JS */
+    }
+
+    @media(max-width:1100px){
+      /* Reduce grid columns for smaller screens */
+      .cards,
+      .metrics-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      
+      /* Adjust layout if needed */
+      .layout { grid-template-columns: 230px minmax(0, 1fr); }
+    }
+
+    @media(max-width:900px){
+      /* Collapse sidebar on small screens for better mobile view */
+      .layout { grid-template-columns: 1fr; }
+      
+      /* Hide sidebar by default, toggle with JS if needed */
+      .sidebar {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; bottom: 0;
+        width: min(88vw, 320px);
+        z-index: 1300;
+        box-shadow: 14px 0 40px rgba(0,0,0,0.25);
+        padding: 14px;
+        overflow-y: auto;
+      }
+         /* Make header actions and buttons full width for easy tap targets */
+      .header-actions { width: 100%; justify-content: center; }
+      .header-actions button { flex: 1 1 100px; padding: 14px; font-size: 1rem; }
+
+      /* Content padding for small screens */
+      .content { padding: 14px; }
+      
+      /* Forms less grid, more vertical stacking */
+      .form-grid { grid-template-columns: 1fr; }
+    }
+
+    @media(max-width:640px){
+      /* Reduce header padding for very small screens */
+      header { padding-left: 12px; padding-right: 12px; }
+
+      /* Hide certain non-essential elements for small screens if needed */
+      .brand p { display: none; }
+
+      /* Make cards and panels full width, reduce padding for small screens */
+      .panel, .card { padding: 14px; border-radius: 14px; }
+
+      /* Make submit buttons full width */
+      .submit-row .btn,
+      .submit-row .submit { flex: 1 1 100%; }
+
+      /* Ensure table min width fits the screen, or enable horizontal scroll */
+      table { min-width: 640px; }
+      th, td { padding: 10px; font-size: 0.9rem; }
+    }
+  /* Shift content when sidebar is open (for mobile) */
+    .content-shift {
+      margin-left: 250px;
+      transition: margin-left 0.3s ease;
+    }
+
+    /* Overlay background for sidebar on small screens */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.3);
+  z-index: 1200;
+}
+
+/* Show overlay when sidebar is open on small screens */
+@media(max-width: 900px){
+  .sidebar.open {
+    transform: translateX(0);
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    z-index: 1300;
+  }
+  .sidebar-overlay.show {
+    display: block;
+  }
+}
+
+/* Container shifts when sidebar is open */
+body.sidebar-open .container {
+  margin-left: 250px; /* Push content to the right */
+}
+
+/* Remove overlay styles for small screens (optional) */
+@media(max-width:900px){
+  /* No overlay styles needed now */
+}
+
+/* Optional: Keep sidebar fixed or static */
+.sidebar {
+  /* Keep width fixed */
+}
+    /* Additional tweaks for small screens if needed can go here */
+
+/* Make sure all input, button, select are touch-friendly */
+input, button, select {
+  -webkit-appearance: none;
+  touch-action: manipulation;
+}
+
+/* Ensure scrollable containers allow smooth scrolling on iOS */
+.table-container {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Make images, videos, and other media responsive */
+img, video {
+  max-width: 100%;
+  height: auto;
+}
+
+/* For fixed position overlays or modals, ensure they are responsive */
+#loginOverlay {
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+/* Additional media query for very small screens if needed */
+@media(max-width: 480px){
+  /* Increase font size slightly for readability */
+  body { font-size: 16px; }
+  /* Make buttons full width if not already */
+  button, input, select {
+    width: 100%;
+  }
+}
+
+  </style>
+</head>
+<body>
+  <div class="header-container">
+  <!-- Login Overlay -->
+<div id="loginOverlay" style="
+  position: fixed;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 24px;
+  z-index: 9999;
+  background:
+    radial-gradient(circle at top right, rgba(37,117,252,0.22), transparent 28%),
+    linear-gradient(135deg, #021a35 0%, #003366 45%, #0b4f9c 100%);
+  font-family: 'Poppins', sans-serif;
+  overflow: auto;
+">
+  <div style="position:absolute; inset:0; backdrop-filter: blur(6px);"></div>
+
+  <div style="
+    position: relative;
+    width: 100%;
+    max-width: 1080px;
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.16);
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.35);
+  ">
+
+    <!-- Left panel -->
+    <div style="
+      padding: 48px 42px;
+      background: linear-gradient(160deg, rgba(255,255,255,0.12), rgba(255,255,255,0.04));
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 560px;
+    ">
+      <div>
+        <div style="
+          display: inline-flex;
+          align-items: center;
+          gap: 10px;
+          padding: 8px 14px;
+          border-radius: 999px;
+          background: rgba(255,255,255,0.12);
+          border: 1px solid rgba(255,255,255,0.16);
+          font-size: 0.9rem;
+          margin-bottom: 22px;
+        ">
+          <span style="
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #7CFFB2;
+            display: inline-block;
+          "></span>
+          Secure Scheme Management Portal
+        </div>
+
+        <h1 style="
+          font-size: 1.6rem;
+          line-height: 1.13;
+          margin: 0 0 14px 0;
+          font-weight: 600;
+        ">
+          OPM Arua Staff Savings and Loan Scheme System
+        </h1>
+
+        <p style="
+          font-size: 1rem;
+          line-height: 1.4;
+          color: rgba(255,255,255,0.88);
+          max-width: 540px;
+          margin: 0;
+        ">
+          Manage members, savings, loans, repayments, reports, and audit trails
+          from one clean digital workspace built for Scheme's operations.
+        </p>
+      </div>
+
+      <div style="
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0,1fr));
+        gap: 16px;
+        margin-top: 28px;
+      ">
+        <div style="
+          padding: 18px;
+          border-radius: 18px;
+          background: rgba(255,255,255,0.10);
+          border: 1px solid rgba(255,255,255,0.12);
+        ">
+          <div style="font-size:1.25rem; font-weight:600; margin-bottom:6px;">Members</div>
+          <div style="color:rgba(255,255,255,0.82); font-size:0.95rem;">
+            Profile management, share capital, and member account tracking.
+          </div>
+        </div>
+
+        <div style="
+          padding: 18px;
+          border-radius: 18px;
+          background: rgba(255,255,255,0.10);
+          border: 1px solid rgba(255,255,255,0.12);
+        ">
+          <div style="font-size:1.25rem; font-weight:600; margin-bottom:6px;">Loans</div>
+          <div style="color:rgba(255,255,255,0.82); font-size:0.95rem;">
+            Approvals, eligibility checks, balances, and repayment schedules.
+          </div>
+        </div>
+
+        <div style="
+          padding: 18px;
+          border-radius: 18px;
+          background: rgba(255,255,255,0.10);
+          border: 1px solid rgba(255,255,255,0.12);
+        ">
+          <div style="font-size:1.25rem; font-weight:600; margin-bottom:6px;">Savings</div>
+          <div style="color:rgba(255,255,255,0.82); font-size:0.95rem;">
+            Capture deposits from cash, bank, mobile money, and salary.
+          </div>
+        </div>
+
+        <div style="
+          padding: 18px;
+          border-radius: 18px;
+          background: rgba(255,255,255,0.10);
+          border: 1px solid rgba(255,255,255,0.12);
+        ">
+          <div style="font-size:1.25rem; font-weight:600; margin-bottom:6px;">Reports</div>
+          <div style="color:rgba(255,255,255,0.82); font-size:0.95rem;">
+            Generate statements, summaries, dividends, and audit records.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right panel -->
+    <div style="
+      background: #ffffff;
+      padding: 42px 34px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    ">
+      <div style="max-width:420px; width:100%; margin:0 auto;">
+        <div style="margin-bottom:24px;">
+          <div style="
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #0b4f9c;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+          ">Welcome back</div>
+
+          <h2 style="
+            color:#0f172a;
+            margin:0 0 8px 0;
+            font-size:2rem;
+            font-weight:600;
+          ">Sign in</h2>
+
+          <p style="
+            color:#64748b;
+            margin:0;
+            line-height:1.7;
+          ">
+            Enter your account details to access the SACCO dashboard or your
+            member self-service portal.
+          </p>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:16px;">
+          <div>
+            <label for="username" style="
+              display:block;
+              margin-bottom:8px;
+              font-size:0.95rem;
+              color:#334155;
+              font-weight:500;
+            ">Username / Staff ID</label>
+
+            <input
+              id="username"
+              placeholder="Enter username or staff ID"
+              style="
+                width: 100%;
+                padding: 15px 16px;
+                border: 1px solid #dbe2ea;
+                border-radius: 14px;
+                font-size: 1rem;
+                background:#f8fafc;
+                color:#0f172a;
+                outline:none;
+                transition: all 0.25s ease;
+              "
+              onfocus="this.style.borderColor='#2563eb';this.style.boxShadow='0 0 0 4px rgba(37,99,235,0.12)';this.style.background='#fff'"
+              onblur="this.style.borderColor='#dbe2ea';this.style.boxShadow='none';this.style.background='#f8fafc'"
+            >
+          </div>
+
+          <div>
+            <label for="password" style="
+              display:block;
+              margin-bottom:8px;
+              font-size:0.95rem;
+              color:#334155;
+              font-weight:500;
+            ">Password</label>
+
+            <div style="position:relative;">
+              <input
+                id="password"
+                type="password"
+                placeholder="Enter password"
+                style="
+                  width: 100%;
+                  padding: 15px 52px 15px 16px;
+                  border: 1px solid #dbe2ea;
+                  border-radius: 14px;
+                  font-size: 1rem;
+                  background:#f8fafc;
+                  color:#0f172a;
+                  outline:none;
+                  transition: all 0.25s ease;
+                "
+                onfocus="this.style.borderColor='#2563eb';this.style.boxShadow='0 0 0 4px rgba(37,99,235,0.12)';this.style.background='#fff'"
+                onblur="this.style.borderColor='#dbe2ea';this.style.boxShadow='none';this.style.background='#f8fafc'"
+              >
+              <button
+                type="button"
+                onclick="togglePassword(this)"
+                style="
+                  position:absolute;
+                  right:10px;
+                  top:50%;
+                  transform:translateY(-50%);
+                  border:none;
+                  background:transparent;
+                  color:#64748b;
+                  cursor:pointer;
+                  font-size:0.92rem;
+                  font-weight:600;
+                "
+              >
+                Show
+              </button>
+            </div>
+          </div>
+
+          <button
+            onclick="login()"
+            class="submit"
+            style="
+              width: 100%;
+              padding: 15px;
+              border: none;
+              border-radius: 14px;
+              background: linear-gradient(135deg, #003366 0%, #0b63ce 100%);
+              color: #fff;
+              font-size: 1rem;
+              font-weight: 600;
+              cursor: pointer;
+              box-shadow: 0 14px 24px rgba(11,99,206,0.25);
+              transition: transform 0.2s ease, box-shadow 0.2s ease;
+            "
+            onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 18px 28px rgba(11,99,206,0.30)'"
+            onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 14px 24px rgba(11,99,206,0.25)'"
+          >
+            Login to System
+          </button>
+        </div>
+
+        <div style="
+          margin-top:22px;
+          padding:14px 16px;
+          background:#eff6ff;
+          border:1px solid #dbeafe;
+          border-radius:14px;
+          color:#1e3a8a;
+          font-size:0.92rem;
+          line-height:1.7;
+        ">
+          Admin and treasurer use username and password. Members can sign in using their Staff ID.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <div id="app" style="display:none; width:100%;">
+    <header>
+      <h2>OPM Arua Staff Savings and Loan Scheme System</h2>
+      <div class="header-actions">
+        <button onclick="toggleDark()">Dark</button>
+        <button onclick="backup()">Backup</button>
+        <button onclick="restore()">Restore</button>
+        <button onclick="logout()">Logout</button>
+      </div>
+      
+  <button onclick="toggleSidebar()">Menu</button>
+    </header>
+
+    <div class="container">
+      <div class="sidebar" id="sidebar">
+        <button class="admin-only" onclick="showSection('dashboard')">Dashboard</button>
+        <button class="admin-only" onclick="showSection('members')">Members</button>
+        <button class="admin-only" onclick="showSection('savings')">Savings</button>
+        <button class="admin-only" onclick="showSection('loans')">Loans</button>
+        <button class="admin-only" onclick="showSection('repayments')">Repayments</button>
+        <button class="admin-only" onclick="showSection('dividends')">Interest / Dividends</button>
+        <button class="admin-only" onclick="showSection('reports')">Reports</button>
+        <button class="admin-only" onclick="showSection('audit')">Audit</button>
+        <button class="member-only" onclick="showSection('memberPortal')">My Account</button>
+        <button onclick="downloadStatement()">Download My Statement</button>
+      </div>
+
+      <div class="main">
+        <section id="dashboard" class="active">
+          <h2>Dashboard</h2>
+          <div class="cards">
+            <div class="card"><h3>Total Members</h3><p id="dashboardMembersCount">0</p></div>
+            <div class="card"><h3>Total Savings</h3><p id="dashboardSavingsCount">0 UGX</p></div>
+            <div class="card"><h3>Total Loans</h3><p id="dashboardLoanCount">0 UGX</p></div>
+            <div class="card"><h3>Loan Balance</h3><p id="dashboardBalanceCount">0 UGX</p></div>
+          </div>
+          <div id="notifications"></div>
+          <div class="panel">
+            <canvas id="financeChart" style="max-width:100%; height:100px;"></canvas>
+          </div>
+        </section>
+
+        <section id="memberPortal" class="member-only">
+          <h2>Member Self-Service Portal</h2>
+          <div class="cards">
+            <div class="card"><h3>Total Savings</h3><p id="mSavings">0 UGX</p></div>
+            <div class="card"><h3>Total Loan</h3><p id="mLoan">0 UGX</p></div>
+            <div class="card"><h3>Loan Balance</h3><p id="mBalance">0 UGX</p></div>
+            <div class="card"><h3>Dividends</h3><p id="mDividend">0 UGX</p></div>
+          </div>
+
+          <h3>My Savings Transactions</h3>
+          <div class="table-container"><table><thead><tr><th>Date</th><th>Amount</th><th>Source</th><th>Status</th></tr></thead><tbody id="memberSavingsTable"></tbody></table></div>
+
+          <h3 style="margin-top:18px;">My Loan Records</h3>
+          <div class="table-container"><table><thead><tr><th>Loan Date</th><th>Amount</th><th>Interest</th><th>Months</th><th>Balance</th></tr></thead><tbody id="memberLoanTable"></tbody></table></div>
+
+          <h3 style="margin-top:18px;">My Repayments</h3>
+          <div class="table-container"><table><thead><tr><th>Date</th><th>Amount</th><th>Method</th></tr></thead><tbody id="memberRepayTable"></tbody></table></div>
+        </section>
+
+        <section id="members">
+          <h2>Members Management</h2>
+          <div class="cards">
+            <div class="card"><h3>Total Members</h3><p id="membersCount">0</p></div>
+            <div class="card"><h3>Active Members</h3><p id="activeMembers">0</p></div>
+            <div class="card"><h3>Total Share Capital</h3><p id="totalShares">0 UGX</p></div>
+          </div>
+          <div id="memberStatement"></div>
+
+          <h3>Add / Register Member</h3>
+          <form id="memberForm" style="display:grid; grid-template-columns:1fr; gap:10px;">
+            <input id="staff" placeholder="Staff ID / Member ID" required>
+            <select id="gender" required><option value="">Gender</option><option>Male</option><option>Female</option></select>
+            <input id="nid" placeholder="National ID">
+            <input id="dept" placeholder="Position / Department" required>
+            <input id="phone" placeholder="Phone Number" required>
+            <input id="email" type="email" placeholder="Email Address" required>
+            <input id="address" placeholder="Address">
+            <input id="share" type="number" placeholder="Initial Share Capital" required>
+            <input id="joinDate" type="date" required>
+            <select id="status" required><option value="Active">Active</option><option value="Suspended">Suspended</option></select>
+            <input id="name" placeholder="Full Name" required>
+            <label>Profile Photo</label>
+            <input type="file" id="photo" accept="image/*" />
+            <img id="photoPreview" src="" style="display:none; max-width:100px; margin-top:10px; border-radius:10px;">
+            <button type="submit" class="submit">Register Member</button>
+          </form>
+
+          <div class="toolbar">
+            <input id="searchMember" placeholder="Search name / staff / phone..." onkeyup="searchMembers()">
+            <select id="filterDept" onchange="filterMembers()"><option value="">Filter by Department</option></select>
+          </div>
+
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr><th>Photo</th><th>Name</th><th>Staff ID</th><th>Gender</th><th>Position</th><th>Phone</th><th>Shares</th><th>Status</th><th>Actions</th></tr>
+              </thead>
+              <tbody id="memberTable"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="savings">
+          <h2>Savings</h2>
+          <form id="savingForm" style="display:grid; gap:10px;">
+            <div style="display:flex; flex-wrap:wrap; gap:10px;">
+              <input id="sMember" placeholder="Staff ID" required>
+              <input id="sDate" type="date" required>
+              <input id="sAmount" type="number" placeholder="Amount" required>
+              <select id="sSource" required><option value="">Select Source</option><option>Cash</option><option>Mobile Money</option><option>Bank</option><option>From Monthly Salary</option></select>
+              <input id="sReference" placeholder="Transaction Reference / ID">
+              <input id="sNotes" placeholder="Notes / Description">
+              <select id="sStatus" required><option value="Pending">Pending</option><option value="Confirmed">Confirmed</option></select>
+            </div>
+            <button type="submit" class="submit">Add Saving</button>
+          </form>
+          <div class="panel" style="margin-top:16px;">
+            <h3>Total Savings: <span id="totalSavings">0 UGX</span></h3>
+            <p style="margin-top:8px; color:var(--muted);">Total Confirmed Savings: <span id="confirmedSavings">0 UGX</span></p>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead><tr><th>Member</th><th>Date</th><th>Amount</th><th>Source</th><th>Reference</th><th>Status</th><th>Notes</th><th>Action</th></tr></thead>
+              <tbody id="savingTable"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="dividends">
+          <h2>Interests</h2>
+          <div class="panel">
+            <input id="profit" type="number" placeholder="Total SACCO Profit" />
+            <button onclick="calculateDividends()" class="btn btn-primary" style="margin-top:10px;">Calculate</button>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead><tr><th>Member ID</th><th>Name</th><th>Savings</th><th>Dividend</th></tr></thead>
+              <tbody id="dividendTable"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="loans">
+          <h2>Loans</h2>
+          <form id="loanForm" style="display:grid; gap:10px;">
+            <div style="display:flex; flex-wrap:wrap; gap:10px;">
+              <input id="loanMember" placeholder="Staff ID" required />
+              <input id="loanAmount" type="number" placeholder="Amount" required />
+              <input id="interest" type="number" placeholder="Interest %" required />
+              <input id="months" type="number" placeholder="Months" required />
+              <input id="loanDate" type="date" required />
+              <input id="loanPurpose" placeholder="Purpose / Type" required />
+              <input id="loanRef" placeholder="Loan Reference / ID" />
+              <select id="loanStatus" required><option value="Pending">Pending</option><option value="Approved">Approved</option><option value="Rejected">Rejected</option></select>
+            </div>
+            <button class="submit" type="submit">Apply Loan</button>
+          </form>
+          <div class="table-container">
+            <table>
+              <thead><tr><th>Member</th><th>Amount</th><th>Interest %</th><th>Months</th><th>Status</th><th>Balance</th><th>Action</th></tr></thead>
+              <tbody id="loanTable"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="repayments">
+          <h2>Loan Repayments</h2>
+          <form id="repayForm" style="display:grid; gap:10px;">
+            <div style="display:flex; flex-wrap:wrap; gap:10px;">
+              <input id="repayMember" placeholder="Staff ID" required />
+              <input id="repayAmount" type="number" placeholder="Amount" required />
+              <input id="paymentDate" type="date" required />
+              <select id="paymentMethod" required><option value="">Select Method</option><option>Cash</option><option>Mobile Money</option><option>Bank Transfer</option></select>
+            </div>
+            <button class="submit" type="submit">Record Payment</button>
+          </form>
+          <div class="table-container">
+            <table>
+              <thead><tr><th>Member</th><th>Paid</th><th>Payment Date</th><th>Method</th><th>Balance</th></tr></thead>
+              <tbody id="repayTable"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="reports" style="max-width:1200px; margin:auto;">
+          <h2 style="text-align:center; margin-bottom:20px;">Dashboard & Reports</h2>
+          <div class="panel">
+            <h3 style="margin-bottom:15px;">Dashboard Summary</h3>
+            <div id="dashboardMetrics" class="metric-grid"></div>
+          </div>
+          <div class="report-buttons">
+            <button onclick="generateMemberSummary()" class="btn btn-primary">Member Summary</button>
+            <button onclick="generateSavingsReport()" class="btn btn-success">Savings Report</button>
+            <button onclick="generateDividendsReport()" class="btn btn-warning">Dividends Report</button>
+            <button onclick="generateIncomeStatement()" class="btn btn-info">Income Statement</button>
+            <button onclick="generateBalanceSheet()" class="btn btn-purple">Balance Sheet</button>
+            <button onclick="generateCashFlow()" class="btn btn-orange">Cash Flow</button>
+            <button onclick="exportCurrentReport()" class="btn btn-teal">Export to Excel</button>
+          </div>
+          <div class="panel" id="reportOutput">Generated report will appear here.</div>
+        </section>
+
+        <section id="audit">
+          <h2>Audit Logs</h2>
+          <div class="table-container">
+            <table>
+              <thead><tr><th>Time</th><th>User</th><th>Action</th></tr></thead>
+              <tbody id="auditTable"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+</div>
+  <script>
+    let members = JSON.parse(localStorage.getItem('members')) || [];
+    let savings = JSON.parse(localStorage.getItem('savings')) || [];
+    let loans = JSON.parse(localStorage.getItem('loans')) || [];
+    let repayments = JSON.parse(localStorage.getItem('repayments')) || [];
+    let dividendsData = JSON.parse(localStorage.getItem('dividends')) || [];
+    let audit = JSON.parse(localStorage.getItem('audit')) || [];
+    let financials = JSON.parse(localStorage.getItem('financials')) || {};
+
+    const users = [
+      { u: 'admin', p: 'admin123', role: 'admin' },
+      { u: 'treasurer', p: '123', role: 'treasurer' }
+    ];
+
+    let currentUser = null;
+    let currentRole = null;
+    let dashboardChart = null;
+    let editMemberIdx = null;
+    let editSavingIdx = null;
+    let editLoanIndex = null;
+
+    const memberForm = document.getElementById('memberForm');
+    const savingForm = document.getElementById('savingForm');
+    const loanForm = document.getElementById('loanForm');
+    const repayForm = document.getElementById('repayForm');
+    const photoInput = document.getElementById('photo');
+    const photoPreview = document.getElementById('photoPreview');
+
+    function save() {
+      localStorage.setItem('members', JSON.stringify(members));
+      localStorage.setItem('savings', JSON.stringify(savings));
+      localStorage.setItem('loans', JSON.stringify(loans));
+      localStorage.setItem('repayments', JSON.stringify(repayments));
+      localStorage.setItem('dividends', JSON.stringify(dividendsData));
+      localStorage.setItem('audit', JSON.stringify(audit));
+      localStorage.setItem('financials', JSON.stringify(financials));
+    }
+
+    function money(x) {
+      return Number(x || 0).toLocaleString() + ' UGX';
+    }
+
+    function log(action) {
+      audit.push({ time: new Date().toLocaleString(), user: currentUser || 'System', action });
+      save();
+      renderAudit();
+    }
+
+    function isAdmin() {
+      return currentRole === 'admin' || currentRole === 'treasurer';
+    }
+
+    function login() {
+      const u = document.getElementById('username').value.trim();
+      const p = document.getElementById('password').value.trim();
+      const user = users.find(x => x.u === u && x.p === p);
+
+      if (user) {
+        currentUser = user.u;
+        currentRole = user.role;
+      } else {
+        const member = members.find(m => m.staff === u);
+        if (member) {
+          currentUser = member.staff;
+          currentRole = 'member';
+        } else {
+          alert('Invalid login credentials');
+          return;
+        }
+      }
+
+      document.getElementById('loginOverlay').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+
+      if (isAdmin()) {
+        document.querySelectorAll('.member-only').forEach(e => e.style.display = 'none');
+        document.querySelectorAll('.admin-only').forEach(e => e.style.display = 'block');
+        showSection('dashboard');
+        updateUI();
+      } else {
+        document.querySelectorAll('.admin-only').forEach(e => e.style.display = 'none');
+        document.querySelectorAll('.member-only').forEach(e => e.style.display = 'block');
+        showSection('memberPortal');
+        showMemberData(currentUser);
+        generateMemberStatement(currentUser);
+      }
+
+      log('User logged in: ' + currentUser);
+    }
+
+    function logout() {
+      location.reload();
+    }
+
+    function showSection(id) {
+      document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
+      const target = document.getElementById(id);
+      if (target) target.classList.add('active');
+      if (id === 'reports') updateDashboard();
+    }
+
+    function findMemberName(staffID) {
+      const m = members.find(m => m.staff === staffID);
+      return m ? m.name : '';
+    }
+
+    function getTotals() {
+      const totalMembers = members.length;
+      const activeMembers = members.filter(m => m.status === 'Active').length;
+      const totalShareCap = members.reduce((a, m) => a + Number(m.share || 0), 0);
+      const totalSavingsAmt = savings.reduce((a, s) => a + Number(s.amount || 0), 0);
+      const confirmedSavingsAmt = savings.filter(s => s.status === 'Confirmed').reduce((a, s) => a + Number(s.amount || 0), 0);
+      const totalLoansAmt = loans.reduce((a, l) => a + Number(l.amount || 0), 0);
+      const totalLoanBalance = loans.reduce((a, l) => a + Number(l.balance || 0), 0);
+      const totalRepaid = repayments.reduce((a, r) => a + Number(r.amount || 0), 0);
+      const totalDividends = dividendsData.reduce((a, d) => a + Number(d.dividend || 0), 0);
+      const netIncome = Number((financials.incomeStatement || []).find(r => r[0] === 'Net Income')?.[1] || 0);
+      return { totalMembers, activeMembers, totalShareCap, totalSavingsAmt, confirmedSavingsAmt, totalLoansAmt, totalLoanBalance, totalRepaid, totalDividends, netIncome };
+    }
+
+    function updateUI() {
+      populateDeptFilter();
+      renderMembersTable();
+      renderSavings();
+      renderLoans();
+      renderRepayments();
+      renderDividends();
+      renderAudit();
+      updateSummary();
+      updateSavingsSummary();
+      updateDashboard();
+      if (currentRole === 'member') {
+        showMemberData(currentUser);
+        generateMemberStatement(currentUser);
+      }
+    }
+
+    function updateSummary() {
+      const t = getTotals();
+      const mCount = document.getElementById('membersCount');
+      const aCount = document.getElementById('activeMembers');
+      const totalShares = document.getElementById('totalShares');
+      if (mCount) mCount.textContent = t.totalMembers;
+      if (aCount) aCount.textContent = t.activeMembers;
+      if (totalShares) totalShares.textContent = money(t.totalShareCap);
+    }
+
+    function updateDashboard() {
+      const t = getTotals();
+      document.getElementById('dashboardMembersCount').textContent = t.totalMembers;
+      document.getElementById('dashboardSavingsCount').textContent = money(t.totalSavingsAmt);
+      document.getElementById('dashboardLoanCount').textContent = money(t.totalLoansAmt);
+      document.getElementById('dashboardBalanceCount').textContent = money(t.totalLoanBalance);
+
+      document.getElementById('dashboardMetrics').innerHTML = `
+        <div class="metricCard">Members<b>${t.totalMembers}</b></div>
+        <div class="metricCard">Active Members<b>${t.activeMembers}</b></div>
+        <div class="metricCard">Share Capital<b>${money(t.totalShareCap)}</b></div>
+        <div class="metricCard">Total Savings<b>${money(t.totalSavingsAmt)}</b></div>
+        <div class="metricCard">Confirmed Savings<b>${money(t.confirmedSavingsAmt)}</b></div>
+        <div class="metricCard">Total Loans<b>${money(t.totalLoansAmt)}</b></div>
+        <div class="metricCard">Loan Balance<b>${money(t.totalLoanBalance)}</b></div>
+        <div class="metricCard">Total Repaid<b>${money(t.totalRepaid)}</b></div>
+        <div class="metricCard">Dividends Paid<b>${money(t.totalDividends)}</b></div>
+        <div class="metricCard">Net Income<b>${money(t.netIncome)}</b></div>
+      `;
+
+      updateDashboardChart();
+      checkLoanAndSavingsDue();
+    }
+
+    function updateDashboardChart() {
+      const ctx = document.getElementById('financeChart');
+      if (!ctx) return;
+      const t = getTotals();
+      if (dashboardChart) dashboardChart.destroy();
+      dashboardChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Members', 'Savings', 'Loans', 'Loan Balance'],
+          datasets: [{
+            label: 'Statistics',
+            data: [t.totalMembers, t.totalSavingsAmt, t.totalLoansAmt, t.totalLoanBalance],
+            backgroundColor: ['#4e79a7', '#f28e2b', '#e15759', '#76b7b2']
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true } }
+        }
+      });
+    }
+
+    function populateDeptFilter() {
+      const depts = [...new Set(members.map(m => m.dept).filter(Boolean))];
+      const filter = document.getElementById('filterDept');
+      filter.innerHTML = '<option value="">Filter by Department</option>';
+      depts.forEach(d => {
+        const opt = document.createElement('option');
+        opt.value = d;
+        opt.textContent = d;
+        filter.appendChild(opt);
+      });
+    }
+
+    photoInput.addEventListener('change', () => {
+      const file = photoInput.files[0];
+      if (!file) return;
+      const fr = new FileReader();
+      fr.onload = function () {
+        photoPreview.src = fr.result;
+        photoPreview.style.display = 'block';
+      };
+      fr.readAsDataURL(file);
+    });
+
+    function resetMemberForm() {
+      memberForm.reset();
+      photoPreview.style.display = 'none';
+      photoPreview.src = '';
+      editMemberIdx = null;
+    }
+
+    memberForm.onsubmit = function (e) {
+      e.preventDefault();
+      const newMember = {
+        name: document.getElementById('name').value.trim(),
+        staff: document.getElementById('staff').value.trim(),
+        gender: document.getElementById('gender').value,
+        nid: document.getElementById('nid').value.trim(),
+        dept: document.getElementById('dept').value.trim(),
+        phone: document.getElementById('phone').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        address: document.getElementById('address').value.trim(),
+        share: parseFloat(document.getElementById('share').value || 0),
+        joinDate: document.getElementById('joinDate').value,
+        status: document.getElementById('status').value,
+        photo: photoPreview.src || ''
+      };
+
+      if (!newMember.staff || !newMember.name) {
+        alert('Fill all required member details');
+        return;
+      }
+
+      if (editMemberIdx === null && members.some(m => m.staff === newMember.staff)) {
+        alert('Staff ID already exists!');
+        return;
+      }
+
+      if (editMemberIdx !== null) {
+        members[editMemberIdx] = newMember;
+        log(`Edited member: ${newMember.name} (${newMember.staff})`);
+      } else {
+        members.push(newMember);
+        log(`Added member: ${newMember.name} (${newMember.staff})`);
+      }
+
+      save();
+      resetMemberForm();
+      updateUI();
+    };
+
+    function renderMembersTable(filter = members) {
+      const tbody = document.getElementById('memberTable');
+      tbody.innerHTML = '';
+      filter.forEach((m, i) => {
+        const actualIndex = members.findIndex(x => x.staff === m.staff);
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><img src="${m.photo || ''}" style="width:50px;height:50px;object-fit:cover;border-radius:8px;background:#e5e7eb"></td>
+          <td>${m.name}</td>
+          <td>${m.staff}</td>
+          <td>${m.gender || '-'}</td>
+          <td>${m.dept || '-'}</td>
+          <td>${m.phone || '-'}</td>
+          <td>${money(m.share)}</td>
+          <td>${m.status || '-'}</td>
+          <td>
+            <div class="inline-actions">
+              <button class="btn btn-info" onclick="editMember(${actualIndex})">Edit</button>
+              <button class="btn btn-danger" onclick="deleteMember(${actualIndex})">Delete</button>
+              <button class="btn btn-primary" onclick="generateMemberCard('${m.staff}')">ID Card</button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function editMember(i) {
+      const m = members[i];
+      if (!m) return;
+      document.getElementById('name').value = m.name;
+      document.getElementById('staff').value = m.staff;
+      document.getElementById('gender').value = m.gender || '';
+      document.getElementById('nid').value = m.nid || '';
+      document.getElementById('dept').value = m.dept || '';
+      document.getElementById('phone').value = m.phone || '';
+      document.getElementById('email').value = m.email || '';
+      document.getElementById('address').value = m.address || '';
+      document.getElementById('share').value = m.share || 0;
+      document.getElementById('joinDate').value = m.joinDate || '';
+      document.getElementById('status').value = m.status || 'Active';
+      if (m.photo) {
+        photoPreview.src = m.photo;
+        photoPreview.style.display = 'block';
+      } else {
+        photoPreview.src = '';
+        photoPreview.style.display = 'none';
+      }
+      editMemberIdx = i;
+    }
+
+    function deleteMember(i) {
+      if (!members[i]) return;
+      if (!confirm('Delete this member?')) return;
+      log(`Deleted member: ${members[i].name} (${members[i].staff})`);
+      members.splice(i, 1);
+      save();
+      updateUI();
+    }
+
+    function searchMembers() {
+      const q = document.getElementById('searchMember').value.toLowerCase();
+      const filtered = members.filter(m =>
+        (m.name || '').toLowerCase().includes(q) ||
+        (m.staff || '').toLowerCase().includes(q) ||
+        (m.phone || '').toLowerCase().includes(q)
+      );
+      renderMembersTable(filtered);
+    }
+
+    function filterMembers() {
+      const dept = document.getElementById('filterDept').value;
+      if (!dept) return renderMembersTable(members);
+      renderMembersTable(members.filter(m => m.dept === dept));
+    }
+
+    savingForm.onsubmit = function (e) {
+      e.preventDefault();
+      const staffID = document.getElementById('sMember').value.trim();
+      const memberName = findMemberName(staffID);
+      if (!memberName) {
+        alert('Member not found');
+        return;
+      }
+
+      const newSave = {
+        staffID,
+        memberName,
+        date: document.getElementById('sDate').value,
+        amount: parseFloat(document.getElementById('sAmount').value || 0),
+        source: document.getElementById('sSource').value,
+        reference: document.getElementById('sReference').value.trim(),
+        notes: document.getElementById('sNotes').value.trim(),
+        status: document.getElementById('sStatus').value
+      };
+
+      if (editSavingIdx !== null) {
+        savings[editSavingIdx] = newSave;
+        log(`Edited saving for: ${newSave.staffID}`);
+        editSavingIdx = null;
+      } else {
+        savings.push(newSave);
+        log(`Added saving for: ${newSave.staffID}`);
+      }
+
+      save();
+      savingForm.reset();
+      updateUI();
+    };
+
+    function renderSavings() {
+      const savingTable = document.getElementById('savingTable');
+      savingTable.innerHTML = '';
+      savings.forEach((s, i) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${s.memberName || 'Unknown'} (${s.staffID})</td>
+          <td>${s.date || '-'}</td>
+          <td>${money(s.amount)}</td>
+          <td>${s.source || '-'}</td>
+          <td>${s.reference || '-'}</td>
+          <td>${s.status || '-'}</td>
+          <td>${s.notes || '-'}</td>
+          <td>
+            <div class="inline-actions">
+              <button class="btn btn-info" onclick="editSaving(${i})">Edit</button>
+              <button class="btn btn-danger" onclick="deleteSaving(${i})">Delete</button>
+            </div>
+          </td>
+        `;
+        savingTable.appendChild(row);
+      });
+    }
+
+    function editSaving(i) {
+      const s = savings[i];
+      if (!s) return;
+      document.getElementById('sMember').value = s.staffID;
+      document.getElementById('sDate').value = s.date;
+      document.getElementById('sAmount').value = s.amount;
+      document.getElementById('sSource').value = s.source;
+      document.getElementById('sReference').value = s.reference || '';
+      document.getElementById('sNotes').value = s.notes || '';
+      document.getElementById('sStatus').value = s.status || 'Pending';
+      editSavingIdx = i;
+    }
+
+    function deleteSaving(i) {
+      if (!savings[i]) return;
+      if (!confirm('Delete this saving?')) return;
+      log(`Deleted saving for: ${savings[i].staffID}`);
+      savings.splice(i, 1);
+      save();
+      updateUI();
+    }
+
+    function updateSavingsSummary() {
+      const t = getTotals();
+      document.getElementById('totalSavings').textContent = money(t.totalSavingsAmt);
+      document.getElementById('confirmedSavings').textContent = money(t.confirmedSavingsAmt);
+    }
+
+    function calculateDividends() {
+      const profit = parseFloat(document.getElementById('profit').value || 0);
+      if (profit <= 0) {
+        alert('Enter profit amount');
+        return;
+      }
+      const totalSavings = savings.reduce((a, s) => a + Number(s.amount || 0), 0);
+      if (totalSavings <= 0) {
+        alert('No savings found to calculate dividends');
+        return;
+      }
+      dividendsData = members.map(m => {
+        const memberSavings = savings.filter(s => s.staffID === m.staff).reduce((a, s) => a + Number(s.amount || 0), 0);
+        const dividend = (memberSavings / totalSavings) * profit;
+        return { staff: m.staff, name: m.name, savings: memberSavings, dividend };
+      });
+      log('Calculated dividends');
+      save();
+      renderDividends();
+      updateUI();
+    }
+
+    function renderDividends() {
+      const table = document.getElementById('dividendTable');
+      table.innerHTML = '';
+      dividendsData.forEach(d => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${d.staff}</td><td>${d.name}</td><td>${money(d.savings)}</td><td>${money(d.dividend)}</td>`;
+        table.appendChild(tr);
+      });
+    }
+
+    function calculateLoanEligibility(staffID) {
+      const memberSavings = savings.filter(s => s.staffID === staffID).reduce((a, s) => a + Number(s.amount || 0), 0);
+      return memberSavings * 3;
+    }
+
+    loanForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      const staffID = document.getElementById('loanMember').value.trim();
+      const amount = parseFloat(document.getElementById('loanAmount').value || 0);
+      const interest = parseFloat(document.getElementById('interest').value || 0);
+      const months = parseInt(document.getElementById('months').value || 0, 10);
+      const date = document.getElementById('loanDate').value;
+      const purpose = document.getElementById('loanPurpose').value.trim();
+      const reference = document.getElementById('loanRef').value.trim();
+      const status = document.getElementById('loanStatus').value;
+      const memberName = findMemberName(staffID);
+
+      if (!memberName) return alert('Member not found');
+      if (!staffID || amount <= 0 || interest < 0 || months <= 0 || !date) return alert('Fill all loan fields correctly');
+
+      const eligible = calculateLoanEligibility(staffID);
+      if (amount > eligible) {
+        alert('Loan exceeds eligibility. Max allowed: ' + money(eligible));
+        return;
+      }
+
+      const totalInterest = (amount * interest) / 100;
+      const totalRepayment = amount + totalInterest;
+      const loanData = { staffID, memberName, date, amount, interest, months, purpose, reference, status, balance: totalRepayment, totalRepayment };
+
+      if (editLoanIndex === null) {
+        loans.push(loanData);
+        log(`Added loan for: ${memberName} (${staffID})`);
+      } else {
+        loans[editLoanIndex] = loanData;
+        log(`Edited loan for: ${memberName} (${staffID})`);
+        editLoanIndex = null;
+      }
+
+      save();
+      loanForm.reset();
+      updateUI();
+    });
+
+    function renderLoans() {
+      const loanTable = document.getElementById('loanTable');
+      loanTable.innerHTML = '';
+      loans.forEach((l, i) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${l.memberName} (${l.staffID})</td>
+          <td>${money(l.amount)}</td>
+          <td>${l.interest}</td>
+          <td>${l.months}</td>
+          <td>${l.status}</td>
+          <td>${money(l.balance)}</td>
+          <td>
+            <div class="inline-actions">
+              <button class="btn btn-info" onclick="editLoan(${i})">Edit</button>
+              <button class="btn btn-danger" onclick="deleteLoan(${i})">Delete</button>
+              <button class="btn btn-primary" onclick="viewSchedule(${i})">Schedule</button>
+            </div>
+          </td>
+        `;
+        loanTable.appendChild(row);
+      });
+    }
+
+    function editLoan(i) {
+      const l = loans[i];
+      if (!l) return;
+      document.getElementById('loanMember').value = l.staffID;
+      document.getElementById('loanAmount').value = l.amount;
+      document.getElementById('interest').value = l.interest;
+      document.getElementById('months').value = l.months;
+      document.getElementById('loanDate').value = l.date;
+      document.getElementById('loanPurpose').value = l.purpose;
+      document.getElementById('loanRef').value = l.reference;
+      document.getElementById('loanStatus').value = l.status;
+      editLoanIndex = i;
+    }
+
+    function deleteLoan(i) {
+      if (!loans[i]) return;
+      if (!confirm('Delete loan?')) return;
+      log(`Deleted loan for: ${loans[i].memberName}`);
+      loans.splice(i, 1);
+      save();
+      updateUI();
+    }
+
+    function generateAmortization(loan) {
+      const schedule = [];
+      const monthlyInterest = (loan.amount * (loan.interest / 100)) / loan.months;
+      const monthlyPrincipal = loan.amount / loan.months;
+      let balance = loan.amount;
+      for (let m = 1; m <= loan.months; m++) {
+        const payment = monthlyPrincipal + monthlyInterest;
+        balance -= monthlyPrincipal;
+        schedule.push({ month: m, payment, principal: monthlyPrincipal, interest: monthlyInterest, balance: Math.max(balance, 0) });
+      }
+      return schedule;
+    }
+
+    function viewSchedule(i) {
+      const loan = loans[i];
+      if (!loan) return;
+      const schedule = generateAmortization(loan);
+      let html = '<h3 style="margin-bottom:15px">Loan Schedule</h3><table><tr><th>Month</th><th>Payment</th><th>Principal</th><th>Interest</th><th>Balance</th></tr>';
+      schedule.forEach(s => {
+        html += `<tr><td>${s.month}</td><td>${money(s.payment)}</td><td>${money(s.principal)}</td><td>${money(s.interest)}</td><td>${money(s.balance)}</td></tr>`;
+      });
+      html += '</table>';
+      document.getElementById('reportOutput').innerHTML = html;
+      showSection('reports');
+    }
+
+    repayForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      const staffID = document.getElementById('repayMember').value.trim();
+      const amount = parseFloat(document.getElementById('repayAmount').value || 0);
+      const date = document.getElementById('paymentDate').value;
+      const method = document.getElementById('paymentMethod').value;
+      const memberName = findMemberName(staffID);
+
+      if (!memberName) return alert('Member not found');
+      if (!staffID || amount <= 0 || !date || !method) return alert('Fill all fields');
+
+      let remaining = amount;
+      const memberLoans = loans.filter(l => l.staffID === staffID && Number(l.balance || 0) > 0);
+      if (!memberLoans.length) return alert('This member has no active loan');
+
+      memberLoans.forEach(loan => {
+        if (remaining <= 0) return;
+        const pay = Math.min(Number(loan.balance || 0), remaining);
+        loan.balance = Number(loan.balance || 0) - pay;
+        remaining -= pay;
+      });
+
+      repayments.push({ staffID, memberName, amount, paymentDate: date, method });
+      log(`Recorded repayment for: ${memberName} (${staffID})`);
+      save();
+      repayForm.reset();
+      updateUI();
+    });
+
+     // Add the following functions for editing/deleting repayment entries
+function editRepayment(i) {
+  const r = repayments[i];
+  if (!r) return;
+  document.getElementById('repayMember').value = r.staffID;
+  document.getElementById('repayAmount').value = r.amount;
+  document.getElementById('paymentDate').value = r.paymentDate;
+  document.getElementById('paymentMethod').value = r.method;
+  // Store index for update
+  currentRepaymentEditIdx = i;
+}
+
+function deleteRepayment(i) {
+  if (!repayments[i]) return;
+  if (!confirm('Delete this repayment record?')) return;
+  repayments.splice(i, 1);
+  log(`Deleted repayment for: ${repayments[i].memberName}`);
+  save();
+  updateUI();
+}
+
+  function renderRepayments() {
+  const tbody = document.getElementById('repayTable');
+  tbody.innerHTML = '';
+  repayments.forEach((r, i) => {
+    const totalBalance = loans.filter(l => l.staffID === r.staffID).reduce((a, l) => a + Number(l.balance || 0), 0);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${r.memberName} (${r.staffID})</td>
+      <td>${money(r.amount)}</td>
+      <td>${r.paymentDate}</td>
+      <td>${r.method}</td>
+      <td>${money(totalBalance)}</td>
+      <td>
+        <div class="inline-actions">
+          <button class="btn btn-info" aria-label="Edit repayment" onclick="editRepayment(${i})">Edit</button>
+          <button class="btn btn-danger" aria-label="Delete repayment" onclick="deleteRepayment(${i})">Delete</button>
+        </div>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+let currentRepaymentEditIdx = null;
+
+repayForm.onsubmit = function(e) {
+  e.preventDefault();
+  // existing code to get values...
+  if (currentRepaymentEditIdx !== null) {
+    repayments[currentRepaymentEditIdx] = { staffID, memberName, amount, paymentDate: date, method };
+    log(`Edited repayment for: ${memberName} (${staffID})`);
+    currentRepaymentEditIdx = null;
+  } else {
+    repayments.push({ staffID, memberName, amount, paymentDate: date, method });
+    log(`Recorded repayment for: ${memberName} (${staffID})`);
+  }
+  save();
+  repayForm.reset();
+  updateUI();
+};
+
+
+    function showMemberData(staffID) {
+      const member = members.find(m => m.staff === staffID);
+      if (!member) return;
+
+      const memberSavings = savings.filter(s => s.staffID === staffID).reduce((a, s) => a + Number(s.amount || 0), 0);
+      const memberLoans = loans.filter(l => l.staffID === staffID);
+      const totalLoan = memberLoans.reduce((a, l) => a + Number(l.amount || 0), 0);
+      const totalBalance = memberLoans.reduce((a, l) => a + Number(l.balance || 0), 0);
+      const memberDividends = dividendsData.find(d => d.staff === staffID);
+      const dividendAmt = memberDividends ? Number(memberDividends.dividend || 0) : 0;
+
+      document.getElementById('mSavings').textContent = money(memberSavings);
+      document.getElementById('mLoan').textContent = money(totalLoan);
+      document.getElementById('mBalance').textContent = money(totalBalance);
+      document.getElementById('mDividend').textContent = money(dividendAmt);
+
+      const tbodySavings = document.getElementById('memberSavingsTable');
+      tbodySavings.innerHTML = '';
+      savings.filter(s => s.staffID === staffID).forEach(s => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${s.date}</td><td>${money(s.amount)}</td><td>${s.source}</td><td>${s.status}</td>`;
+        tbodySavings.appendChild(tr);
+      });
+
+      const tbodyLoans = document.getElementById('memberLoanTable');
+      tbodyLoans.innerHTML = '';
+      memberLoans.forEach(l => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${l.date}</td><td>${money(l.amount)}</td><td>${l.interest}%</td><td>${l.months}</td><td>${money(l.balance)}</td>`;
+        tbodyLoans.appendChild(tr);
+      });
+
+      const tbodyRepay = document.getElementById('memberRepayTable');
+      tbodyRepay.innerHTML = '';
+      repayments.filter(r => r.staffID === staffID).forEach(r => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${r.paymentDate}</td><td>${money(r.amount)}</td><td>${r.method}</td>`;
+        tbodyRepay.appendChild(tr);
+      });
+    }
+
+    function generateMemberStatement(staffID) {
+      const member = members.find(m => m.staff === staffID);
+      if (!member) return;
+      const totalSavings = savings.filter(s => s.staffID === staffID).reduce((a, s) => a + Number(s.amount || 0), 0);
+      const totalLoans = loans.filter(l => l.staffID === staffID).reduce((a, l) => a + Number(l.amount || 0), 0);
+      const loanBalance = loans.filter(l => l.staffID === staffID).reduce((a, l) => a + Number(l.balance || 0), 0);
+      const totalRepay = repayments.filter(r => r.staffID === staffID).reduce((a, r) => a + Number(r.amount || 0), 0);
+      const dividend = Number(dividendsData.find(d => d.staff === staffID)?.dividend || 0);
+
+      document.getElementById('memberStatement').innerHTML = `
+        <table>
+          <tr><th>Item</th><th>Amount</th></tr>
+          <tr><td>Total Savings</td><td>${money(totalSavings)}</td></tr>
+          <tr><td>Total Loans</td><td>${money(totalLoans)}</td></tr>
+          <tr><td>Total Repaid</td><td>${money(totalRepay)}</td></tr>
+          <tr><td>Loan Balance</td><td>${money(loanBalance)}</td></tr>
+          <tr><td>Dividend Earned</td><td>${money(dividend)}</td></tr>
+        </table>
+      `;
+    }
+
+    function generateMemberSummary() {
+      if (!isAdmin()) return alert('Access Denied');
+      const data = [['Name', 'Staff ID', 'Department', 'Status', 'Savings']];
+      members.forEach(m => {
+        const memberSavings = savings.filter(s => s.staffID === m.staff).reduce((a, b) => a + Number(b.amount || 0), 0);
+        data.push([m.name, m.staff, m.dept, m.status, money(memberSavings)]);
+      });
+      renderReport(data, 'Member Summary');
+    }
+
+    function generateSavingsReport() {
+      if (!isAdmin()) return alert('Access Denied');
+      const data = [['Member', 'Staff ID', 'Amount', 'Source', 'Status', 'Date']];
+      savings.forEach(s => data.push([s.memberName || '', s.staffID, money(s.amount), s.source || '', s.status || '', s.date || '']));
+      renderReport(data, 'Savings Report');
+    }
+
+    function generateDividendsReport() {
+      if (!isAdmin()) return alert('Access Denied');
+      const data = [['Member', 'Staff ID', 'Savings', 'Dividend']];
+      members.forEach(m => {
+        const memberSavings = savings.filter(s => s.staffID === m.staff).reduce((a, b) => a + Number(b.amount || 0), 0);
+        const div = dividendsData.find(d => d.staff === m.staff);
+        data.push([m.name, m.staff, money(memberSavings), money(div ? div.dividend : 0)]);
+      });
+      renderReport(data, 'Dividends Report');
+    }
+
+    function autoGenerateFinancials() {
+      const t = getTotals();
+      financials.incomeStatement = [
+        ['Item', 'Amount'],
+        ['Loan Interest Revenue', loans.reduce((a, l) => a + ((Number(l.amount || 0) * Number(l.interest || 0)) / 100), 0)],
+        ['Other Revenue', 0],
+        ['Total Revenue', loans.reduce((a, l) => a + ((Number(l.amount || 0) * Number(l.interest || 0)) / 100), 0)],
+        ['Operating Expenses', 0],
+        ['Total Expenses', 0],
+        ['Net Income', loans.reduce((a, l) => a + ((Number(l.amount || 0) * Number(l.interest || 0)) / 100), 0)]
+      ];
+      financials.balanceSheet = [
+        ['Item', 'Amount'],
+        ['Cash / Savings Available', t.totalSavingsAmt + t.totalRepaid],
+        ['Loans Outstanding', t.totalLoanBalance],
+        ['Total Assets', t.totalSavingsAmt + t.totalRepaid + t.totalLoanBalance],
+        ['Member Deposits', t.totalSavingsAmt],
+        ['Dividends Payable', t.totalDividends],
+        ['Total Liabilities', t.totalSavingsAmt + t.totalDividends],
+        ['Owner Equity', Math.max((t.totalSavingsAmt + t.totalRepaid + t.totalLoanBalance) - (t.totalSavingsAmt + t.totalDividends), 0)]
+      ];
+      financials.cashFlow = [
+        ['Item', 'Amount'],
+        ['Savings Inflows', t.totalSavingsAmt],
+        ['Loan Repayments', t.totalRepaid],
+        ['Loans Disbursed', -t.totalLoansAmt],
+        ['Dividends Paid/Allocated', -t.totalDividends],
+        ['Net Change', t.totalSavingsAmt + t.totalRepaid - t.totalLoansAmt - t.totalDividends]
+      ];
+      save();
+    }
+
+    function generateIncomeStatement() {
+      if (!isAdmin()) return alert('Access Denied');
+      autoGenerateFinancials();
+      renderReport(financials.incomeStatement, 'Income Statement');
+    }
+
+    function generateBalanceSheet() {
+      if (!isAdmin()) return alert('Access Denied');
+      autoGenerateFinancials();
+      renderReport(financials.balanceSheet, 'Balance Sheet');
+    }
+
+    function generateCashFlow() {
+      if (!isAdmin()) return alert('Access Denied');
+      autoGenerateFinancials();
+      renderReport(financials.cashFlow, 'Cash Flow');
+    }
+
+    function renderReport(data, title) {
+      let html = `<h3 style="margin-bottom:15px">${title}</h3><table>`;
+      data.forEach((row, i) => {
+        html += '<tr>';
+        row.forEach(cell => {
+          html += i === 0 ? `<th>${cell}</th>` : `<td>${cell}</td>`;
+        });
+        html += '</tr>';
+      });
+      html += '</table>';
+      document.getElementById('reportOutput').innerHTML = html;
+    }
+
+    function exportCurrentReport() {
+      const table = document.querySelector('#reportOutput table');
+      if (!table) return alert('Generate a report first');
+      const wb = XLSX.utils.table_to_book(table);
+      XLSX.writeFile(wb, 'SACCO_Report.xlsx');
+    }
+
+    function checkLoanAndSavingsDue() {
+      const notificationsDiv = document.getElementById('notifications');
+      notificationsDiv.innerHTML = '';
+      let hasAlerts = false;
+      const today = new Date();
+
+      loans.forEach(loan => {
+        const loanDate = new Date(loan.date);
+        const monthsElapsed = (today.getFullYear() - loanDate.getFullYear()) * 12 + (today.getMonth() - loanDate.getMonth());
+        if (loan.status !== 'Approved') return;
+        if (monthsElapsed >= loan.months && Number(loan.balance || 0) > 0) {
+          hasAlerts = true;
+          notificationsDiv.innerHTML += `<div style="margin-bottom:8px;">🚨 Loan for ${loan.memberName} (${loan.staffID}) is overdue. Remaining balance: ${money(loan.balance)}</div>`;
+        } else if (monthsElapsed >= loan.months - 1 && Number(loan.balance || 0) > 0) {
+          hasAlerts = true;
+          notificationsDiv.innerHTML += `<div style="margin-bottom:8px;">⚠️ Loan for ${loan.memberName} (${loan.staffID}) is nearing due. Remaining balance: ${money(loan.balance)}</div>`;
+        }
+      });
+
+      savings.forEach(s => {
+        if (s.status === 'Pending') {
+          hasAlerts = true;
+          notificationsDiv.innerHTML += `<div style="margin-bottom:8px;">⏳ Saving by ${s.staffID} on ${s.date} is pending confirmation.</div>`;
+        }
+      });
+
+      notificationsDiv.style.display = hasAlerts ? 'block' : 'none';
+    }
+
+    function renderAudit() {
+      const auditTable = document.getElementById('auditTable');
+      auditTable.innerHTML = '';
+      [...audit].reverse().forEach(a => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${a.time}</td><td>${a.user}</td><td>${a.action}</td>`;
+        auditTable.appendChild(tr);
+      });
+    }
+
+    function downloadStatement() {
+      let table = null;
+      if (currentRole === 'member') {
+        generateMemberStatement(currentUser);
+        table = document.querySelector('#memberStatement table');
+      } else {
+        table = document.querySelector('#reportOutput table') || document.querySelector('#memberStatement table');
+      }
+      if (!table) return alert('No statement/report available');
+      const wb = XLSX.utils.table_to_book(table);
+      XLSX.writeFile(wb, 'My_SACCO_Statement.xlsx');
+    }
+
+    function generateMemberCard(staffID) {
+      const member = members.find(m => m.staff === staffID);
+      if (!member) return;
+      const html = `
+        <div style="width:350px;border:2px solid #003366;padding:15px;font-family:Poppins,sans-serif;">
+          <h3>OPM ARUA SACCO</h3>
+          <img src="${member.photo || ''}" style="width:80px;height:80px;object-fit:cover;border-radius:8px;background:#eee;">
+          <p><b>Name:</b> ${member.name}</p>
+          <p><b>Member ID:</b> ${member.staff}</p>
+          <p><b>Department:</b> ${member.dept}</p>
+          <p><b>Status:</b> ${member.status}</p>
+        </div>
+      `;
+      const w = window.open('', '_blank');
+      w.document.write(html);
+      w.document.close();
+      w.print();
+    }
+
+    function toggleDark() {
+      document.body.classList.toggle('darkMode');
+    }
+
+    setInterval(() => {
+      localStorage.setItem('autoBackup', JSON.stringify({ members, savings, loans, repayments, dividendsData, audit, financials }));
+    }, 60000);
+
+    function backup() {
+      const data = { members, savings, loans, repayments, dividendsData, audit, financials };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'sacco_backup.json';
+      a.click();
+    }
+
+    function restore() {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.json,application/json';
+      input.onchange = e => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function () {
+          try {
+            const data = JSON.parse(reader.result);
+            members = data.members || [];
+            savings = data.savings || [];
+            loans = data.loans || [];
+            repayments = data.repayments || [];
+            dividendsData = data.dividendsData || [];
+            audit = data.audit || [];
+            financials = data.financials || {};
+            save();
+            updateUI();
+            alert('Backup restored successfully');
+          } catch (err) {
+            alert('Invalid backup file');
+          }
+        };
+        reader.readAsText(file);
+      };
+      input.click();
+    }
+
+    updateUI();
+
+    function togglePassword(button){
+  const passwordInput = document.getElementById("password");
+
+  if(passwordInput.type === "password"){
+    passwordInput.type = "text";
+    button.textContent = "Hide";
+  } else {
+    passwordInput.type = "password";
+    button.textContent = "Show";
+  }
+}
+ // Expand toggleSidebar to update ARIA attributes
+    function toggleSidebar() {
+      const body = document.body;
+      const sidebar = document.getElementById('sidebar');
+      const isOpen = body.classList.toggle('sidebar-open');
+
+      // Update ARIA attributes
+      const toggleBtn = document.querySelector('button[aria-label="Toggle menu"]');
+      if (toggleBtn) {
+        toggleBtn.setAttribute('aria-expanded', isOpen);
+      }
+      // Also toggle aria-hidden on sidebar
+      sidebar.setAttribute('aria-hidden', !isOpen);
+    }
+
+function closeSidebar() {
+  const sidebar = document.querySelector('.sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+
+  sidebar.classList.remove('open');
+  overlay.classList.remove('show');
+}
+  
+</script>
+  </script>
+</body>
+</html>
