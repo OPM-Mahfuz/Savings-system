@@ -356,23 +356,33 @@
 }
 
 /* Show overlay when sidebar is open on small screens */
-@media(max-width: 900px){
-  .sidebar.open {
-    transform: translateX(0);
+@media(max-width:900px){
+  .sidebar {
     position: fixed;
     top: 0;
     left: 0;
     height: 100%;
+    width: min(88vw, 320px);
+    background: linear-gradient(180deg, var(--primary), #01264a);
+    padding: 14px;
+    overflow-y: auto;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
     z-index: 1300;
   }
-  .sidebar-overlay.show {
+  .sidebar.open {
+    transform: translateX(0);
+  }
+  #sidebarOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.3);
+    z-index: 1200;
+    display: none; /* toggled via class */
+  }
+  #sidebarOverlay.show {
     display: block;
   }
-}
-
-/* Container shifts when sidebar is open */
-body.sidebar-open .container {
-  margin-left: 250px; /* Push content to the right */
 }
 
 /* Remove overlay styles for small screens (optional) */
@@ -726,7 +736,7 @@ img, video {
         <button onclick="logout()">Logout</button>
       </div>
       
-  <button onclick="toggleSidebar()">Menu</button>
+  <button aria-label="Toggle menu" aria-expanded="false" onclick="toggleSidebar()">Menu</button>
     </header>
 
     <div class="container">
@@ -1893,26 +1903,34 @@ repayForm.onsubmit = function(e) {
   }
 }
  // Expand toggleSidebar to update ARIA attributes
-    function toggleSidebar() {
-      const body = document.body;
-      const sidebar = document.getElementById('sidebar');
-      const isOpen = body.classList.toggle('sidebar-open');
+function toggleSidebar() {
+  const body = document.body;
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  const toggleBtn = document.querySelector('button[aria-label="Toggle menu"]');
 
-      // Update ARIA attributes
-      const toggleBtn = document.querySelector('button[aria-label="Toggle menu"]');
-      if (toggleBtn) {
-        toggleBtn.setAttribute('aria-expanded', isOpen);
-      }
-      // Also toggle aria-hidden on sidebar
-      sidebar.setAttribute('aria-hidden', !isOpen);
-    }
+  const isOpen = !body.classList.toggle('sidebar-open');
+
+  if (isOpen) {
+    sidebar.classList.add('open');
+    overlay.classList.add('show');
+    toggleBtn.setAttribute('aria-expanded', 'true');
+  } else {
+    sidebar.classList.remove('open');
+    overlay.classList.remove('show');
+    toggleBtn.setAttribute('aria-expanded', 'false');
+  }
+}
+
+document.getElementById('sidebarOverlay').addEventListener('click', () => {
+  closeSidebar();
+});
 
 function closeSidebar() {
-  const sidebar = document.querySelector('.sidebar');
-  const overlay = document.getElementById('sidebarOverlay');
-
-  sidebar.classList.remove('open');
-  overlay.classList.remove('show');
+  document.body.classList.remove('sidebar-open');
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('show');
+  document.querySelector('button[aria-label="Toggle menu"]').setAttribute('aria-expanded', 'false');
 }
   
 </script>
